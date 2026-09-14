@@ -26,7 +26,7 @@
 
 | แหล่งอ้างอิง | กลไก | จุดเด่น |
 | --- | --- | --- |
-| Anthropic — [Claude Code Hooks reference](https://code.claude.com/docs/en/hooks) | Event-based: `PreToolUse`/`PostToolUse`/`Stop`/`UserPromptSubmit` ฯลฯ ยิงเป็น subprocess/HTTP/MCP tool คุยกันผ่าน JSON บน stdin/stdout, ตัดสินด้วย exit code + `permissionDecision: allow\|deny` + `updatedInput` (แก้ input ก่อนส่งต่อ) | กำหนดจังหวะ (event) ได้ละเอียดมาก, `matcher` กรองด้วยชื่อ tool แบบ regex, รองรับ deterministic policy enforcement |
+| Anthropic — [Claude Code Hooks reference](https://code.claude.com/docs/en/hooks) | Event-based: `PreToolUse`/`PostToolUse`/`Stop`/`UserPromptSubmit` ฯลฯ ยิงเป็น subprocess/HTTP คุยกันผ่าน JSON บน stdin/stdout, ตัดสินด้วย exit code + `permissionDecision: allow\|deny` + `updatedInput` (แก้ input ก่อนส่งต่อ) | กำหนดจังหวะ (event) ได้ละเอียดมาก, `matcher` กรองด้วยชื่อ tool แบบ regex, รองรับ deterministic policy enforcement |
 | OpenAI — [Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/) | Function-based: hook function คืน `GuardrailFunctionOutput(output_info, tripwire_triggered)` — ถ้า `tripwire_triggered=True` ระบบโยน exception (`InputGuardrailTripwireTriggered` ฯลฯ) หยุดทันที | เขียนเป็น Python function ธรรมดา, มี input/output/tool guardrail แยกชัดเจน, ตัวอย่างจริงในเอกสารคือการ block ข้อความที่มี `"sk-"` (secret) ใน tool arguments |
 
 **สรุปสิ่งที่ยืมมาออกแบบ `core/hooks.py`:**
