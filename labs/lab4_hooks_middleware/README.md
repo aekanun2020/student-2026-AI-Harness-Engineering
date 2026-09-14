@@ -1,6 +1,6 @@
 # Lab 4 — Hooks / Middleware ต่อยอด Agent Loop
 
-> ต่อยอดจาก **[Lab 3 — Agent Loop](../lab3-agent-loop/README.md)** โดยไม่แก้ `agent_loop.py`
+> ต่อยอดจาก **[Lab 3 — Agent Loop](../lab3_agent_loop/README.md)** โดยไม่แก้ `agent_loop.py`
 > เดิมเลยแม้แต่บรรทัดเดียว — เพิ่ม hook engine เข้าไปห่อ loop เดิมรอบนอกเท่านั้น
 >
 > ต้นทาง Lab 3: [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph)
@@ -13,8 +13,7 @@
 - เข้าใจว่า **Hooks** (Anthropic) และ **Middleware/Guardrails** (OpenAI) แก้ปัญหาเดียวกัน
   ด้วยกลไกต่างกัน แล้วออกแบบ engine กลางที่รวม 2 แนวคิดเข้าด้วยกันได้
 - เห็นว่า agent loop ที่ "เปลือย" (Lab 3) เพิ่ม safety/observability layer เข้าไปได้โดยไม่ต้อง
-  แก้ core logic — เป็นหลักการเดียวกับที่ `core/registry.py` ของ Lab 4 เดิม (MCP) ใช้ขยาย tools
-  โดยไม่แก้ agent loop
+  แก้ core logic
 - ฝึกเขียน test ที่ยืนยัน behavior ของ middleware โดยไม่ต้องพึ่ง LLM จริง (stub การเรียก API)
 
 ---
@@ -33,12 +32,12 @@
 - เอา **แนวคิด tripwire ของ OpenAI** มาเป็น decision `"deny"` (แทนที่จะ raise exception เพราะ
   agent loop ของเรารันใน process เดียว ไม่ต้องข้าม process แบบ Claude Code hook)
 - เพิ่ม decision `"modify"` เอง (ไม่มีในทั้งสองระบบตรง ๆ) เพื่อให้ hook แก้ไขข้อมูลแล้วส่งต่อ
-  hook ถัดไปได้ เหมือน middleware chain ทั่วไป (Express/Koa-style) — ใกล้เคียงกับ `updatedInput`
-  ของ Claude Code แต่ทำเป็น chain ได้มากกว่า 1 hook
+  hook ถัดไปได้ เหมือน middleware chain ทั่วไป — ใกล้เคียงกับ `updatedInput` ของ Claude Code
+  แต่ทำเป็น chain ได้มากกว่า 1 hook
 
 ---
 
-## ออกแบบ: `core/hooks.py`
+## ออกแบบ: `labs/core/hooks.py`
 
 ```python
 @dataclass
@@ -92,23 +91,25 @@ exception ของ OpenAI) ส่วน `"modify"` จะ merge `data` เข�
 
 ## วิธีรัน
 
+รันจาก **root ของ repo** เสมอ (เพราะ import `labs.core.*` แบบเดียวกับ Lab 3):
+
 ```bash
 pip install -r requirements.txt
 cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys
 
-python agent_loop_hooks.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
+python labs/lab4_hooks_middleware/agent_loop_hooks.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 ```
 
 ผลลัพธ์จะเหมือน Lab 3 เดิม บวกบรรทัด `HOOK ...` เวลามี hook ตัวไหน deny/modify และไฟล์
-`agent_audit.log` จะถูกสร้าง/เพิ่มบรรทัดใหม่ทุกครั้งที่รัน
+`labs/lab4_hooks_middleware/agent_audit.log` จะถูกสร้าง/เพิ่มบรรทัดใหม่ทุกครั้งที่รัน
 
 ### รัน test โดยไม่ต้องมี API key จริง
 
 ```bash
-python test_hooks.py
+python labs/lab4_hooks_middleware/test_hooks.py
 ```
 
-`test_hooks.py` monkeypatch `core.llm.chat` ให้คืนคำตอบตามสคริปต์ที่กำหนดไว้ล่วงหน้า (ไม่เรียก
+`test_hooks.py` monkeypatch `labs.core.llm.chat` ให้คืนคำตอบตามสคริปต์ที่กำหนดไว้ล่วงหน้า (ไม่เรียก
 OpenRouter จริง) แล้วรัน `run_agent()` เต็มวงจริง ยืนยัน 3 เคส:
 
 1. `pre_tool` modify (ตัดช่องว่าง) + deny (นิพจน์ยาวเกิน) + `stop` บังคับ retry จนกว่าคำตอบจะมีตัวเลข

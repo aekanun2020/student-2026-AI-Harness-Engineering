@@ -1,13 +1,15 @@
 """
 Scripted test สำหรับ agent_loop_hooks.py — ไม่ต้องมี OPENROUTER_API_KEY จริง
-เพราะ monkeypatch core.llm.chat ให้คืนคำตอบตามสคริปต์ที่กำหนดไว้ล่วงหน้า
+เพราะ monkeypatch labs.core.llm.chat ให้คืนคำตอบตามสคริปต์ที่กำหนดไว้ล่วงหน้า
 เพื่อยืนยันว่า hook ทั้ง 4 ตัวทำงานถูกจุดจริงในวง run_agent (ไม่ใช่แค่ unit test แยก)
 
-รัน:  cd assignments/lab4-hooks-middleware && python test_hooks.py
+รัน:  python labs/lab4_hooks_middleware/test_hooks.py   (จาก root ของ repo)
 """
-import os, json
+import sys, os, json
 
-import core.llm as llm_module
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
+import labs.core.llm as llm_module
 
 
 class FakeFunction:
@@ -65,13 +67,13 @@ def fake_chat(messages, model=None, tools=None, **kwargs):
 
 llm_module.chat = fake_chat
 
-import agent_loop_hooks as aloop
+from labs.lab4_hooks_middleware import agent_loop_hooks as aloop
 
 # ล้าง audit log เก่า (ถ้ามี) ให้เทสอ่านง่าย
 if os.path.exists(aloop.AUDIT_LOG_PATH):
     os.remove(aloop.AUDIT_LOG_PATH)
 
-# แทรก fake dispatch ที่ tool_3 (จำลองว่ามี tool หลุด secret ออกมา) — เพิ่มเข้าไปทดสอบ redact
+# แทรก fake dispatch (จำลองว่ามี tool หลุด secret ออกมา) — เพิ่มเข้าไปทดสอบ redact
 _orig_dispatch = aloop.dispatch
 def fake_dispatch(name, args):
     if args.get("expression") == "SECRET_TEST":

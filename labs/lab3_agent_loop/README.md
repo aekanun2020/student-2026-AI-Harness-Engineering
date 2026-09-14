@@ -1,10 +1,8 @@
 # Lab 3 — สร้าง Agent Loop แรกด้วย Pure Python
 
-> คัดลอกมาจาก [`labs/lab3_agent_loop/`](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab3_agent_loop)
-> ของ [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph) (หลักสูตร **Agentic AI Development with
-> Python**, Module 1.3) — logic เดิมทุกบรรทัด แก้แค่ import path ให้รันแบบ standalone ในโฟลเดอร์นี้ได้เอง
->
-> ต่อยอดเป็น **[Lab 4 — Hooks / Middleware](../lab4-hooks-middleware/README.md)** อยู่ในโฟลเดอร์ถัดไป
+> หลักสูตร **Agentic AI Development with Python (หลักสูตรที่ 2)** — Module 1.3
+
+> **ตำแหน่งใน [8 Layer ของ repo](../../README.md#สถาปัตยกรรม-agent-app--agent--llm--8-layers):** Layer 5 (Reasoning Loop) เป็นหลัก — สร้างวง reason→act→observe ด้วยมือ (ReAct) + แตะ Layer 3 ด้วย local tools
 
 ---
 
@@ -13,23 +11,30 @@
 - เข้าใจสูตร **Minimal Agent = while loop + model + tools** โดยไม่ใช้ framework ใดเลย
 - นิยาม local tools (ฟังก์ชัน + OpenAI function schema) และเชื่อมเข้า agent loop
 - เห็นวงจร **THINK → TOOL_USE → OBSERVE → END_TURN** ที่เขียนเองด้วย Pure Python
+- เทียบกับสิ่งที่ Lab 8 จะได้รับ "ฟรี" จาก LangGraph (เข้าใจ framework โดยรู้เบื้องหลัง)
+
+---
+
+## สิ่งที่ต้องเตรียมก่อน (Prerequisites)
+
+- ทำ Setup สภาพแวดล้อมใน [Lab 1](../lab1_setup/README.md) ให้เสร็จก่อน (conda env `agentic-ai` + `.env`)
 
 ---
 
 ## วิธีรัน
 
 ```bash
-pip install -r requirements.txt
-cp .env.example .env   # แล้วใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys
+conda activate agentic-ai
+cd Python-Agent-LangGraph   # รันจาก root repo (เพราะ import labs.core.*)
 
-python agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
+python labs/lab3_agent_loop/agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 ```
 
 ---
 
 ## อธิบายจุดสำคัญของโค้ด
 
-ไฟล์: [`agent_loop.py`](agent_loop.py)
+ไฟล์: `labs/lab3_agent_loop/agent_loop.py`
 
 ### (1) Local tools — ฟังก์ชัน + schema แบบ OpenAI function
 
@@ -73,6 +78,8 @@ for step in range(1, max_steps + 1):
 
 จุดสำคัญคือต้อง `append` assistant message ที่มี `tool_calls` **ก่อน** แล้วจึง append `role="tool"` — ลำดับนี้ตาม OpenAI API spec อย่างเคร่งครัด
 
+> จุดที่ควรเปิดอ่าน: บล็อก `messages.append({"role": "tool", "tool_call_id": call.id, "content": result})` — นี่คือ OBSERVE step ที่ป้อนผล tool กลับเข้า context เพื่อให้ LLM อ่านต่อ
+
 ---
 
 ## ผลลัพธ์ที่คาดหวัง
@@ -86,3 +93,5 @@ for step in range(1, max_steps + 1):
 ------------------------------------------------------------
 [answer] ตอนนี้เวลา 19:47:00 และ 15×4 = 60
 ```
+
+ดู screenshot ตัวอย่าง: `../../screenshots/labs/lab3_agent_loop.png`

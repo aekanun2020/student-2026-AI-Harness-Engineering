@@ -1,9 +1,9 @@
 """
 Lab 4 — ต่อยอด Lab 3 (agent_loop.py) ด้วย Hooks / Middleware (Layer 4)
 อ้างอิงแนวคิด: Claude Code Hooks (PreToolUse/PostToolUse/Stop) + OpenAI Agents SDK
-Guardrails (tripwire) — รายละเอียด engine อยู่ที่ core/hooks.py
+Guardrails (tripwire) — รายละเอียด engine อยู่ที่ labs/core/hooks.py
 
-Lab 3 เดิม (agent_loop.py) คือ THINK -> TOOL_USE -> OBSERVE -> END_TURN แบบเปลือย (Layer 5 ล้วน)
+agent_loop.py ของ Lab 3 คือ THINK -> TOOL_USE -> OBSERVE -> END_TURN แบบเปลือย (Layer 5 ล้วน)
 ไฟล์นี้แทรก hook 5 จังหวะเข้าไปในวงเดิม โดย "ไม่แก้ agent_loop.py เลยสักบรรทัด"
 (import TOOLS/SYSTEM/dispatch ของเดิมมาใช้ซ้ำ) แล้วห่อ loop ใหม่รอบนอก:
 
@@ -25,13 +25,15 @@ Layer 4 (Hooks) และ Layer 8 (Safety: audit trail) ยังไม่มี
                                 ไม่มีตัวเลขเลย ให้ deny การจบ turn 1 ครั้ง แล้วบังคับให้ LLM ตอบใหม่
                                 (เทียบกับ Stop hook ของ Claude Code ที่ "บล็อกไม่ให้จบ" ได้)
 
-รัน:  cd assignments/lab4-hooks-middleware && python agent_loop_hooks.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
+รัน:  python labs/lab4_hooks_middleware/agent_loop_hooks.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 """
 import sys, os, json, re, datetime
 
-from core import llm
-from core.hooks import HookManager, HookResult
-from agent_loop import TOOLS, SYSTEM, dispatch
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from labs.core import llm
+from labs.core.hooks import HookManager, HookResult
+from labs.lab3_agent_loop.agent_loop import TOOLS, SYSTEM, dispatch
 
 AUDIT_LOG_PATH = os.path.join(os.path.dirname(__file__), "agent_audit.log")
 
