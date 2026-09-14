@@ -1,0 +1,19 @@
+# ---- ความลับ: ห้าม commit คีย์จริงเด็ดขาด ----
+.env
+.env.*
+!.env.example
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# ---- Logs / ชั่วคราว ----
+*.log
+.DS_Store
