@@ -1,9 +1,6 @@
 """
 Lab 3 — สร้าง Agent Loop แรกด้วย Pure Python (ไม่ใช้ framework)
-
-คัดลอกมาจาก ../lab3-agent-loop/agent_loop.py (ไม่แก้ logic เลย) มาไว้ที่นี่ด้วย
-เพื่อให้ Lab 4 (agent_loop_hooks.py) เป็นโฟลเดอร์ที่ self-contained รันได้เอง
-ต้นทาง: https://github.com/aekanun2020/Python-Agent-LangGraph (labs/lab3_agent_loop/agent_loop.py)
+ต้นฉบับ: github.com/aekanun2020/Python-Agent-LangGraph (labs/lab3_agent_loop/agent_loop.py)
 
 หัวใจของ outline: "Minimal Agent = while loop + model + tools"
   - นิยาม local tool 2 ตัว (get_time, calculate) พร้อม schema แบบ OpenAI function
@@ -14,9 +11,10 @@ Lab 3 — สร้าง Agent Loop แรกด้วย Pure Python (ไม�
 โค้ดนี้คือ "loop ที่เขียนด้วยมือ" ของสิ่งที่หลักสูตรที่ 1 อธิบายเป็นทฤษฎี
 (LLM เห็น tools -> ตัดสินใจ tool_use -> client เรียก tool -> ป้อนผลกลับ)
 
-รัน:  cd assignments/lab4-hooks-middleware && python agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
+รัน:  python agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"  (cd assignments/lab4-hooks-middleware ก่อน)
 """
 import sys, json, datetime
+# ไม่ต้องมี sys.path.insert แบบต้นฉบับ เพราะรันแบบ standalone ในโฟลเดอร์นี้
 
 from core import llm
 
