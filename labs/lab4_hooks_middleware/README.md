@@ -5,6 +5,8 @@
 >
 > ต้นทาง Lab 3: [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph)
 > (`labs/lab3_agent_loop/`) — repo หลักสูตร **Agentic AI Development with Python**
+>
+> ดูคำถามตัวอย่างและแบบฝึกหัดแยกไว้ที่ [QUESTIONS.md](QUESTIONS.md)
 
 ---
 
@@ -97,11 +99,12 @@ exception ของ OpenAI) ส่วน `"modify"` จะ merge `data` เข�
 pip install -r requirements.txt
 cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys
 
-python labs/lab4_hooks_middleware/agent_loop_hooks.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
+python labs/lab4_hooks_middleware/agent_loop_hooks.py "<คำถาม>"
 ```
 
 ผลลัพธ์จะเหมือน Lab 3 เดิม บวกบรรทัด `HOOK ...` เวลามี hook ตัวไหน deny/modify และไฟล์
-`labs/lab4_hooks_middleware/agent_audit.log` จะถูกสร้าง/เพิ่มบรรทัดใหม่ทุกครั้งที่รัน
+`labs/lab4_hooks_middleware/agent_audit.log` จะถูกสร้าง/เพิ่มบรรทัดใหม่ทุกครั้งที่รัน — ดูคำถาม
+ตัวอย่างและแบบฝึกหัดที่ทำให้ hook แต่ละตัว trigger จริงได้ที่ [QUESTIONS.md](QUESTIONS.md)
 
 ### รัน test โดยไม่ต้องมี API key จริง
 

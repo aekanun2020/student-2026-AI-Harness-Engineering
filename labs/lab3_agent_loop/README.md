@@ -95,3 +95,7 @@ for step in range(1, max_steps + 1):
 ```
 
 ดู screenshot ตัวอย่าง: `../../screenshots/labs/lab3_agent_loop.png`
+
+---
+
+> ดูคำถามตัวอย่างและแบบฝึกหัดแยกไว้ที่ [QUESTIONS.md](QUESTIONS.md)
