@@ -12,6 +12,10 @@
 >
 > ดูคำถามตัวอย่างและแบบฝึกหัดแยกไว้ที่ [QUESTIONS.md](QUESTIONS.md)
 
+**hook คืออะไรในภาษาคน:** ผู้ช่วยที่ยืนข้าง AI คอยตรวจ**ทุกครั้ง**ก่อน AI จะกดปุ่มอะไร (เรียก tool)
+และหลังได้ผลกลับมา — ถ้าผิดกติกาก็ห้ามกด หรือแก้ข้อมูลให้ก่อนส่งต่อ ต่างจาก Lab 3a ที่ "ขอร้อง" AI
+ผ่าน system prompt ตรงนี้ "บังคับ" ด้วยโปรแกรม AI ไม่มีสิทธิ์เลือกว่าจะทำตามหรือไม่
+
 ---
 
 ## จุดประสงค์การเรียนรู้
@@ -32,6 +36,10 @@
 | --- | --- | --- |
 | Anthropic — [Claude Code Hooks reference](https://code.claude.com/docs/en/hooks) | Event-based: `PreToolUse`/`PostToolUse`/`Stop`/`UserPromptSubmit` ฯลฯ ยิงเป็น subprocess/HTTP คุยกันผ่าน JSON บน stdin/stdout, ตัดสินด้วย exit code + `permissionDecision: allow\|deny` + `updatedInput` (แก้ input ก่อนส่งต่อ) | กำหนดจังหวะ (event) ได้ละเอียดมาก, `matcher` กรองด้วยชื่อ tool แบบ regex, รองรับ deterministic policy enforcement |
 | OpenAI — [Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/) | Function-based: hook function คืน `GuardrailFunctionOutput(output_info, tripwire_triggered)` — ถ้า `tripwire_triggered=True` ระบบโยน exception (`InputGuardrailTripwireTriggered` ฯลฯ) หยุดทันที | เขียนเป็น Python function ธรรมดา, มี input/output/tool guardrail แยกชัดเจน, ตัวอย่างจริงในเอกสารคือการ block ข้อความที่มี `"sk-"` (secret) ใน tool arguments |
+
+> **ตารางด้านบนอธิบาย "ของจริง" ของ 2 บริษัทเท่านั้น** (Claude Code = โปรแกรม AI เขียนโค้ดของ Anthropic ·
+> Agents SDK = ชุดเครื่องมือสร้าง agent ของ OpenAI) — hook ใน repo นี้ (`core/hooks.py`) เป็น Python
+> function ธรรมดา **ไม่ใช้ subprocess / HTTP / JSON เลย** เราเอามาแค่แนวคิด ไม่ได้เอาโค้ดมา
 
 **สรุปสิ่งที่ยืมมาออกแบบ `core/hooks.py`:**
 - เอา **event/matcher ของ Claude Code** (จุดแทรกชัดเจน + กรองด้วยชื่อ tool) มาเป็นโครง
@@ -55,6 +63,8 @@
 `HookResult` คือรูปแบบผลลัพธ์ที่ตายตัว ให้ hook function **ทุกตัว** คืนกลับมาแบบเดียวกันหมด
 เพื่อให้ส่วนอื่นของระบบอ่านและเข้าใจตรงกัน — คล้ายการกรอกแบบฟอร์มมาตรฐาน คนอ่านไม่ต้องเดาว่า
 แต่ละคนจะเขียนคำตอบมาในรูปแบบไหน:
+
+ไม่ต้องอ่าน syntax Python ออกก็ได้ — 4 บรรทัดในกล่องคือ "ช่อง" 4 ช่องของแบบฟอร์ม ดูตารางถัดไปพอ:
 
 ```python
 @dataclass
@@ -124,6 +134,8 @@ pre_llm -> [LLM] -> post_llm -> (tool_calls?)
 ## Hook ตัวอย่าง 4 ตัวใน `agent_loop_hooks.py`
 
 1. **`audit_log_hook`** — เขียนทุก `pre_tool`/`post_tool`/`stop` เป็น audit trail ลง `agent_audit.log`
+   (audit trail = สมุดบันทึกว่า AI ทำอะไร ตอนไหน เอาไว้ตรวจย้อนหลัง — ไฟล์ `.log` เปิดด้วย text editor
+   ธรรมดาได้ 1 บรรทัด = 1 เหตุการณ์)
 2. **`guard_calculate_hook`** (matcher `"calculate"`) — `deny` ถ้านิพจน์ยาวผิดปกติ (>40 ตัวอักษร),
    `modify` (ตัดช่องว่างหน้า-หลัง) ถ้าจำเป็น — defense-in-depth เพิ่มจาก whitelist ที่ `calculate()`
    ใน Lab 3 มีอยู่แล้ว
@@ -197,7 +209,8 @@ python labs/lab4_hooks_middleware/test_hooks.py
 ```
 
 `test_hooks.py` monkeypatch `labs.core.llm.chat` ให้คืนคำตอบตามสคริปต์ที่กำหนดไว้ล่วงหน้า (ไม่เรียก
-OpenRouter จริง) แล้วรัน `run_agent()` เต็มวงจริง ยืนยัน 3 เคส:
+OpenRouter จริง — monkeypatch/stub = สลับตัวเรียก AI จริงเป็นตัวปลอมที่ตอบตามบท เพื่อทดสอบได้โดยไม่เสียเงิน
+และไม่ต้องมี API key) แล้วรัน `run_agent()` เต็มวงจริง ยืนยัน 3 เคส:
 
 1. `pre_tool` modify (ตัดช่องว่าง) + deny (นิพจน์ยาวเกิน) + `stop` บังคับ retry จนกว่าคำตอบจะมีตัวเลข
 2. `post_tool` redact secret ก่อนที่จะหลุดเข้า audit log (เช็คว่า log ไม่มี secret ดิบเลย)

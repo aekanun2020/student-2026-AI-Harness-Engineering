@@ -17,12 +17,62 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 | 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction + Notes ดัดแปลงจาก [lab7_memory/agent_memory.py](https://github.com/aekanun2020/Python-Agent-LangGraph/blob/main/labs/lab7_memory/agent_memory.py)) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
 | 6 | [labs/lab6_sandbox](labs/lab6_sandbox) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + `RLIMIT_CPU`) — ทดสอบจริงด้วยการบังคับ resource exhaustion (`9999**99999999`) แล้วยืนยันว่า agent loop หลักไม่กระทบ พร้อมบันทึกบั๊กจริงเรื่อง `RLIMIT_AS` ใช้ไม่ได้บน macOS |
 
+## สำหรับผู้เรียนที่เคยใช้แค่หน้าแชท (ChatGPT / Claude) — อ่านตรงนี้ก่อน
+
+### terminal คืออะไร
+
+ทุก Lab รันจาก **terminal** (หน้าต่างพิมพ์คำสั่งเป็นข้อความ ไม่มีปุ่มให้กด):
+- **Mac:** กด ⌘ + Space พิมพ์ `Terminal` แล้ว Enter
+- **Windows:** กดปุ่ม Windows พิมพ์ `PowerShell` แล้ว Enter
+
+ตลอดหลักสูตรนี้ใช้คำสั่งหลักแค่ 3 ตัว: `cd` (เข้าโฟลเดอร์), `python3` (รันโปรแกรม), `pip` (ติดตั้งไลบรารี)
+ทุกคำสั่งพิมพ์แล้วกด Enter — ถ้าเห็นข้อความ error สีแดงยาวๆ ไม่ต้องตกใจ อ่านบรรทัดสุดท้ายก่อน มักบอกสาเหตุ
+
+### ศัพท์ที่จะเจอตั้งแต่บรรทัดแรก
+
+| คำ | ความหมายในหลักสูตรนี้ |
+| --- | --- |
+| **repo** | โฟลเดอร์โปรเจกต์ที่เก็บโค้ดทั้งหมด ฝากไว้บน GitHub — "root ของ repo" = โฟลเดอร์บนสุดที่มีไฟล์ README.md นี้อยู่ |
+| **system prompt** | ข้อความตั้งต้นที่บอกบุคลิก/กติกาให้ AI ก่อนเริ่มคุย — สิ่งเดียวกับ Custom Instructions ที่คุณเคยตั้งในหน้าแชท |
+| **tool** | ปุ่มที่ AI กดเองได้ เช่น เครื่องคิดเลข, นาฬิกา — เหมือนตอน ChatGPT ขึ้นว่า "กำลังค้นหาเว็บ…" นั่นคือมันกำลังใช้ tool |
+| **agent loop** | AI ทำงานหลายขั้นต่อเนื่องเอง (คิด → ใช้ tool → ดูผล → คิดต่อ) จนเสร็จ แทนที่จะตอบทีเดียวแล้วจบ |
+| **token** | ชิ้นส่วนของคำ (ภาษาไทย 1 คำอาจเป็นหลาย token) — ค่าใช้จ่ายและขีดจำกัดความยาวของ AI นับเป็น token ไม่ใช่ตัวอักษร |
+| **API key** | รหัสสำหรับให้โปรแกรมเรียกใช้ AI แทนเรา (เหมือน login ให้โค้ด) — **ห้ามแชร์ให้ใคร** |
+| **process** | โปรแกรมที่รันอยู่ 1 ครั้ง — ปิดแล้วเปิดใหม่ = process ใหม่ ความจำที่อยู่ใน RAM หายหมด |
+| **argument** | ค่าที่ส่งให้ tool หรือส่งต่อท้ายคำสั่ง (ไม่ใช่ "การเถียง") |
+| **deterministic** | ทำเหมือนเดิม 100% ทุกครั้ง ไม่ขึ้นกับการสุ่มของ AI |
+| **byte-identical** | ไฟล์เหมือนต้นฉบับทุกตัวอักษร — ใช้กับไฟล์ที่สไลด์ของหลักสูตรอ้างอิงเลขบรรทัดไว้ จึงห้ามแก้ |
+
+### อ่านผลลัพธ์บนหน้าจอยังไง
+
+ทุก Lab ตั้งแต่ Lab 3 พิมพ์ผลออกมาแบบนี้:
+
+| บรรทัดที่เห็น | แปลว่า |
+| --- | --- |
+| `[user] …` | คำถามที่คุณส่งเข้าไป |
+| `[step N] THINK -> ขอเรียก K tool` | รอบคิดที่ N — AI ตัดสินใจว่าจะใช้ tool K ตัว |
+| `TOOL_USE calculate({...}) -> 60` | โปรแกรมเรียก tool ให้ AI แล้ว ได้ผลลัพธ์ `60` กลับมา |
+| `[step N] END_TURN` | AI พอใจแล้ว ไม่ขอใช้ tool อีก กำลังจะตอบ |
+| `[answer] …` | คำตอบสุดท้าย — สิ่งที่คุณจะเห็นถ้านี่เป็นหน้าแชท |
+| `HOOK …` (Lab 4) | ระบบตรวจ (hook) ดักไว้ — บล็อกหรือแก้ไขบางอย่างก่อน AI ทำต่อ |
+| `[resume] …` / `[compaction] …` (Lab 5) | โหลดความจำเก่ากลับมา / สรุปบทสนทนาเก่าเพื่อประหยัดที่ |
+
+### ค่าใช้จ่าย
+
+ทุกครั้งที่รัน = เรียก AI จริงผ่าน **OpenRouter** ซึ่ง**คิดเงินตามการใช้จริง** (ไม่ใช่เหมาจ่ายรายเดือนแบบ
+ChatGPT Plus) — ต้องสมัครและเติมเงินก่อน ส่วนใหญ่ครั้งละไม่กี่สตางค์ถึงไม่กี่บาท ยกเว้น
+`compare_models.py` (Lab 2) ที่เรียก 3 โมเดลในครั้งเดียว และ Lab 5 ที่รันวนหลายรอบ
+
 ## วิธีรัน (รันจาก root ของ repo เสมอ เพราะทุก Lab import ผ่าน `labs.core.*`)
+
+> ทำ [Lab 1](labs/lab1_setup/README.md) ให้จบก่อน (ติดตั้ง Python, สร้าง venv, ใส่ API key) —
+> และ **ทุกครั้งที่เปิด terminal ใหม่** ต้อง `cd` เข้า root ของ repo แล้ว `source .venv/bin/activate` ก่อนเสมอ
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys
+cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys (ดูวิธีขอคีย์ใน Lab 1)
 
+# ข้อความใน "..." ต่อท้ายคำสั่ง = คำถามที่จะส่งให้ AI — เปลี่ยนเป็นอะไรก็ได้
 python labs/lab1_setup/check_env.py            # ตรวจ OpenRouter (LLM) เท่านั้น — ควรผ่าน
 python labs/lab2_llm/first_llm.py "อธิบาย Agent Loop ใน 1 ประโยค"
 python labs/lab3_agent_loop/agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
@@ -33,9 +83,20 @@ python labs/lab5_memory_checkpoint/agent_loop.py "แนะนำตัวหน
 python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 ```
 
-เข้าไปอ่าน README ของแต่ละ Lab เพื่อดูรายละเอียดเพิ่มเติม
+> **⚠️ ข้อความตกค้างจาก repo ต้นทางที่จะเจอใน README ของ Lab 2 และ Lab 3** (สองไฟล์นี้เป็นสำเนา
+> byte-identical จึงแก้ไม่ได้):
+> - เห็น `conda activate agentic-ai` → ให้ใช้ `source .venv/bin/activate` แทน
+> - เห็น `cd Python-Agent-LangGraph` → ให้ใช้ `cd student-2026-AI-Harness-Engineering` แทน
+> - เห็นการอ้างถึง **Lab 7-9**, **LangGraph**, หรือโฟลเดอร์ `screenshots/` → ของเหล่านั้นอยู่ใน repo
+>   ต้นทางเท่านั้น ไม่มีใน repo นี้ ข้ามได้ ไม่ใช่คุณทำอะไรพลาด
+
+เข้าไปอ่าน README ของแต่ละ Lab เพื่อดูรายละเอียดเพิ่มเติม — และทุก Lab มี `QUESTIONS.md` เป็นแบบฝึกหัด
+ที่ติดป้ายไว้ว่าข้อไหน 🟢 แค่พิมพ์คำสั่ง · 🟡 ต้องเปิดแก้ไฟล์ · 🔴 ต้องเขียน Python
 
 ---
+
+> **ส่วนที่เหลือของหน้านี้สำหรับผู้สอน/ผู้ตรวจ** — ผู้เรียนข้ามไปอ่าน README ของแต่ละ Lab ได้เลย
+> ไม่ต้องเข้าใจตารางด้านล่างก่อนเริ่มทำ Lab
 
 ## สถาปัตยกรรม Agent: App → Agent → LLM + 8 Layers
 
