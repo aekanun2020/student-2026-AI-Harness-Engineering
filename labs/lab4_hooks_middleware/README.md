@@ -193,7 +193,7 @@ function ที่ `register()` ไว้ถูกเรียกทำงาน
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys
+cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys (Windows: copy .env.example .env)
 
 python labs/lab4_hooks_middleware/agent_loop_hooks.py "<คำถาม>"
 ```

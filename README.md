@@ -25,7 +25,8 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 - **Mac:** กด ⌘ + Space พิมพ์ `Terminal` แล้ว Enter
 - **Windows:** กดปุ่ม Windows พิมพ์ `PowerShell` แล้ว Enter
 
-ตลอดหลักสูตรนี้ใช้คำสั่งหลักแค่ 3 ตัว: `cd` (เข้าโฟลเดอร์), `python3` (รันโปรแกรม), `pip` (ติดตั้งไลบรารี)
+ตลอดหลักสูตรนี้ใช้คำสั่งหลักแค่ 3 ตัว: `cd` (เข้าโฟลเดอร์), `python3` (รันโปรแกรม — **Windows พิมพ์ `python`**
+แทน เพราะ `python3` บน Windows มักไม่มีหรือเด้งไปเปิด Microsoft Store), `pip` (ติดตั้งไลบรารี)
 ทุกคำสั่งพิมพ์แล้วกด Enter — ถ้าเห็นข้อความ error สีแดงยาวๆ ไม่ต้องตกใจ อ่านบรรทัดสุดท้ายก่อน มักบอกสาเหตุ
 
 ### ศัพท์ที่จะเจอตั้งแต่บรรทัดแรก
@@ -66,11 +67,14 @@ ChatGPT Plus) — ต้องสมัครและเติมเงิน�
 ## วิธีรัน (รันจาก root ของ repo เสมอ เพราะทุก Lab import ผ่าน `labs.core.*`)
 
 > ทำ [Lab 1](labs/lab1_setup/README.md) ให้จบก่อน (ติดตั้ง Python, สร้าง venv, ใส่ API key) —
-> และ **ทุกครั้งที่เปิด terminal ใหม่** ต้อง `cd` เข้า root ของ repo แล้ว `source .venv/bin/activate` ก่อนเสมอ
+> และ **ทุกครั้งที่เปิด terminal ใหม่** ต้อง `cd` เข้า root ของ repo แล้ว `source .venv/bin/activate`
+> (Windows: `.venv\Scripts\activate`) ก่อนเสมอ — คำสั่งด้านล่างเขียนแบบ Mac/Linux, Windows ใช้ `python`
+> แทน `python3` และ `copy` แทน `cp`
 
 ```bash
 pip install -r requirements.txt
 cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys (ดูวิธีขอคีย์ใน Lab 1)
+                       # Windows: copy .env.example .env
 
 # ข้อความใน "..." ต่อท้ายคำสั่ง = คำถามที่จะส่งให้ AI — เปลี่ยนเป็นอะไรก็ได้
 python labs/lab1_setup/check_env.py            # ตรวจ OpenRouter (LLM) เท่านั้น — ควรผ่าน
@@ -85,7 +89,7 @@ python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แ
 
 > **⚠️ ข้อความตกค้างจาก repo ต้นทางที่จะเจอใน README ของ Lab 2 และ Lab 3** (สองไฟล์นี้เป็นสำเนา
 > byte-identical จึงแก้ไม่ได้):
-> - เห็น `conda activate agentic-ai` → ให้ใช้ `source .venv/bin/activate` แทน
+> - เห็น `conda activate agentic-ai` → ให้ใช้ `source .venv/bin/activate` แทน (Windows: `.venv\Scripts\activate`)
 > - เห็น `cd Python-Agent-LangGraph` → ให้ใช้ `cd student-2026-AI-Harness-Engineering` แทน
 > - เห็นการอ้างถึง **Lab 7-9**, **LangGraph**, หรือโฟลเดอร์ `screenshots/` → ของเหล่านั้นอยู่ใน repo
 >   ต้นทางเท่านั้น ไม่มีใน repo นี้ ข้ามได้ ไม่ใช่คุณทำอะไรพลาด

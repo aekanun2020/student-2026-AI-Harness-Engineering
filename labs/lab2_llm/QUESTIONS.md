@@ -1,13 +1,14 @@
 # Lab 2 — คำถามตัวอย่าง และแบบฝึกหัด
 
 > ดูคำอธิบายโค้ดแบบเต็มที่ [README.md](README.md) — README นั้นเป็นสำเนาจาก repo ต้นทาง จึงมีคำสั่งเก่า
-> ตกค้าง: เห็น `conda activate agentic-ai` ให้ใช้ `source .venv/bin/activate` แทน และเห็น
+> ตกค้าง: เห็น `conda activate agentic-ai` ให้ใช้ `source .venv/bin/activate` (Windows: `.venv\Scripts\activate`) แทน และเห็น
 > `cd Python-Agent-LangGraph` ให้ใช้ `cd student-2026-AI-Harness-Engineering` แทน
 >
 > ส่วน "ใต้ฝา: `llm.chat()` ทำงานอย่างไร" ใน README **ข้ามได้ถ้ายังไม่เขียน Python** — ไม่กระทบการรัน
 
 > **ก่อนรันทุกคำสั่งในหน้านี้:** เปิด terminal → `cd` เข้าโฟลเดอร์ repo → `source .venv/bin/activate`
-> (ต้องเห็น `(.venv)` หน้า prompt) — ถ้าเจอ error ว่าหา `openai` ไม่เจอ แปลว่าลืมขั้นนี้
+> (Windows: `.venv\Scripts\activate` และใช้ `python` แทน `python3`) — ต้องเห็น `(.venv)` หน้า prompt
+> ถ้าเจอ error ว่าหา `openai` ไม่เจอ แปลว่าลืมขั้นนี้
 
 ## คำถามตัวอย่าง
 

@@ -60,7 +60,7 @@ pip install -r requirements.txt
 ### 4) ตั้งค่า environment variables
 
 ```bash
-cp .env.example .env
+cp .env.example .env          # Windows: copy .env.example .env
 ```
 
 > ไฟล์ที่ชื่อขึ้นต้นด้วยจุด (`.env`) จะ**ถูกซ่อน**ใน Finder/File Explorer ตามค่าเริ่มต้น หาไม่เจอไม่ต้องแปลกใจ —

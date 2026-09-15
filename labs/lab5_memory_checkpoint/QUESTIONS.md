@@ -3,7 +3,8 @@
 > ดูคำอธิบายแบบเต็มที่ [README.md](README.md)
 
 > **ก่อนรันทุกคำสั่งในหน้านี้:** เปิด terminal → `cd` เข้าโฟลเดอร์ repo → `source .venv/bin/activate`
-> (ต้องเห็น `(.venv)` หน้า prompt) — ถ้าเจอ error ว่าหา `openai` ไม่เจอ แปลว่าลืมขั้นนี้
+> (Windows: `.venv\Scripts\activate` และใช้ `python` แทน `python3`) — ต้องเห็น `(.venv)` หน้า prompt
+> ถ้าเจอ error ว่าหา `openai` ไม่เจอ แปลว่าลืมขั้นนี้
 
 ## คำถามตัวอย่าง (ค่า default ที่ฝังอยู่ในโค้ด)
 

@@ -1,12 +1,13 @@
 # Lab 3 — คำถามตัวอย่าง และแบบฝึกหัด
 
 > ดูคำอธิบายโค้ดและวิธีรันแบบเต็มที่ [README.md](README.md) — README นั้นเป็นสำเนาจาก repo ต้นทาง จึงมี
-> คำสั่งเก่าตกค้าง: เห็น `conda activate agentic-ai` ให้ใช้ `source .venv/bin/activate` แทน, เห็น
+> คำสั่งเก่าตกค้าง: เห็น `conda activate agentic-ai` ให้ใช้ `source .venv/bin/activate` (Windows: `.venv\Scripts\activate`) แทน, เห็น
 > `cd Python-Agent-LangGraph` ให้ใช้ `cd student-2026-AI-Harness-Engineering` แทน, และ Lab 8 /
 > โฟลเดอร์ `screenshots/` ที่อ้างถึงไม่มีใน repo นี้ ข้ามได้
 
 > **ก่อนรันทุกคำสั่งในหน้านี้:** เปิด terminal → `cd` เข้าโฟลเดอร์ repo → `source .venv/bin/activate`
-> (ต้องเห็น `(.venv)` หน้า prompt) — ถ้าเจอ error ว่าหา `openai` ไม่เจอ แปลว่าลืมขั้นนี้
+> (Windows: `.venv\Scripts\activate` และใช้ `python` แทน `python3`) — ต้องเห็น `(.venv)` หน้า prompt
+> ถ้าเจอ error ว่าหา `openai` ไม่เจอ แปลว่าลืมขั้นนี้
 
 **Lab นี้คืออะไรในภาษาคน:** เคยเห็น ChatGPT ขึ้นว่า "กำลังค้นหาเว็บ…" แล้วค่อยตอบไหม? นั่นคือ AI ตัดสินใจ
 ใช้ tool → ดูผล → ตอบ — Lab นี้เราเขียน "วง" นั้นเองด้วยมือ แต่ tool คือเครื่องคิดเลข (`calculate`) กับ

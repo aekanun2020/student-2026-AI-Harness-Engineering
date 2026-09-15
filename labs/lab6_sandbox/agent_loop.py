@@ -20,6 +20,7 @@ SANDBOX — sandboxed_calculate()
 
   หมายเหตุขอบเขต: sandbox นี้จำกัดแค่ "process + CPU time" เท่านั้น — ยังไม่ได้จำกัด filesystem
   หรือ network เหมือน Docker container ตัวเต็ม (ดู README สำหรับตารางเทียบ framework จริง)
+  บน Windows โมดูล resource ไม่มี จึงเหลือแค่ "process + timeout" (ยังกัน process หลักได้ แต่ช้ากว่า)
 
 รัน:  python labs/lab6_sandbox/agent_loop.py "<คำถาม>"
 """
@@ -40,15 +41,21 @@ SANDBOX_MEMORY_MB = 64       # จำกัด memory ของ subprocess (MB) 
 SANDBOX_TIMEOUT_SEC = 4      # เพดานเวลารอผลจริง (กันเผื่อ subprocess ค้างไม่ยอมตาย)
 
 _WORKER_CODE = """
-import sys, json, resource
+import sys, json
 cpu_sec = {cpu_sec}
 mem_bytes = {mem_bytes}
-resource.setrlimit(resource.RLIMIT_CPU, (cpu_sec, cpu_sec))
 try:
-    # RLIMIT_AS ไม่รองรับบน macOS (Darwin kernel ปฏิเสธเสมอ) แต่รองรับบน Linux —
-    # ใส่ไว้เมื่อแพลตฟอร์มรองรับ ถ้าไม่รองรับก็ข้ามไป เหลือ RLIMIT_CPU + timeout ข้างนอกเป็นตาข่ายกัน
-    resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
-except (ValueError, OSError):
+    import resource   # มีเฉพาะ Unix (macOS/Linux) — Windows ไม่มีโมดูลนี้
+    resource.setrlimit(resource.RLIMIT_CPU, (cpu_sec, cpu_sec))
+    try:
+        # RLIMIT_AS ไม่รองรับบน macOS (Darwin kernel ปฏิเสธเสมอ) แต่รองรับบน Linux —
+        # ใส่ไว้เมื่อแพลตฟอร์มรองรับ ถ้าไม่รองรับก็ข้ามไป
+        resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
+    except (ValueError, OSError):
+        pass
+except ImportError:
+    # Windows: ไม่มี resource limit ระดับ OS ให้ใช้ — เหลือ timeout ของ subprocess.run() ฝั่ง parent
+    # เป็นตาข่ายเดียว (ยังฆ่า process ลูกที่ค้างได้ แค่ช้ากว่า RLIMIT_CPU และไม่จำกัด memory)
     pass
 
 expression = sys.argv[1]
