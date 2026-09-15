@@ -1,10 +1,8 @@
 # Lab 5 — Memory (Compaction + Notes) + Checkpoint
 
-> ต่อยอดจาก **[Lab 3 — Agent Loop](../lab3_agent_loop/README.md)** และดัดแปลงจาก
-> `labs/lab7_memory/agent_memory.py` ของ repo ต้นทางของหลักสูตร (Lab 7 ไม่ได้อยู่ใน repo นี้ —
-> ส่วนที่ใช้ถูกคัดลอกมาไว้ในไฟล์ของ Lab นี้แล้ว) — คง `ConversationMemory` (history/notes/compaction) ไว้ใกล้เคียง
-> ต้นฉบับที่สุด แล้วเพิ่ม **checkpoint** เข้าไปเพื่อให้ "external memory" ที่ต้นฉบับอ้างว่ามี
-> กลายเป็น external จริง (ดูหัวข้อ "สิ่งที่ต่างจากต้นฉบับ" ด้านล่าง)
+> ต่อยอดจาก **[Lab 3 — Agent Loop](../lab3_agent_loop/README.md)** — ส่วนความจำ (`ConversationMemory`:
+> compaction + notes) นำมาจากบทเรียนเรื่อง memory ของหลักสูตร แล้วเพิ่ม **checkpoint** เข้าไปเพื่อให้
+> ความจำนั้นอยู่รอดแม้ปิดโปรแกรมแล้วเปิดใหม่ (ทุกอย่างที่ต้องใช้อยู่ในโฟลเดอร์นี้แล้ว)
 >
 > Sandbox แยกออกไปอยู่ **[Lab 6](../lab6_sandbox/README.md)** เพราะเป็นคนละ Layer (6 vs 2)
 
@@ -26,18 +24,6 @@ Lab นี้สร้างสิ่งนั้นเองให้เห็�
 
 ---
 
-## สิ่งที่ต่างจากต้นฉบับ (`labs/lab7_memory/agent_memory.py`)
-
-| ส่วน | ต้นฉบับ Lab 7 | ที่นี่ (Lab 5) |
-| --- | --- | --- |
-| `ConversationMemory` (history/notes/`context()`/`maybe_compact()`) | ต้นฉบับ | **เหมือนเดิมทุกบรรทัด** ไม่แก้ logic เลย |
-| Tools | `ToolRegistry` ต่อ MCP MSSQL Server จริงผ่าน `config.MCP_SERVER_URL` | Local tools ของ Lab 3 (`get_time`/`calculate`) เพราะ repo นี้ไม่มี MCP server ให้ต่อ |
-| `SYSTEM` | DB-analyst persona อ้างอิง MCP tools ตรงๆ | ปรับให้เข้ากับ local tools แต่คงประโยค "จำบริบทการสนทนาก่อนหน้าได้" ไว้ (หัวใจของบทเรียน) |
-| **Checkpoint** | ❌ ไม่มี — `history`/`notes` เป็นแค่ attribute ใน RAM ของ object เดียว process ตายก็หายหมด (ชื่อ "memory" แต่ไม่ external จริง) | ✅ **เพิ่มใหม่** — บันทึก `history`/`notes` ลง JSON ต่อ `thread_id` หลังจบทุก step/turn |
-| Entry point | `main()` เรียก `turn()` ตายตัว 2 รอบในโค้ดเดียว (single process) | `main()` รับคำถามจาก CLI ทีละครั้ง โหลด memory จาก checkpoint ก่อนเสมอ — **แต่ละครั้งที่รันคือ process ใหม่จริง** ทำให้พิสูจน์ "รอดข้าม context reset" ได้ตรงไปตรงมากว่า |
-
----
-
 ## ทดสอบจริงทั้ง 3 อย่าง (ไม่ใช่แค่ทฤษฎี)
 
 ### 1) External memory รอดข้าม process จริง
@@ -55,9 +41,10 @@ Lab นี้สร้างสิ่งนั้นเองให้เห็�
 
 process ที่ 2 **ไม่มี state ใดๆ หลงเหลือจาก process ที่ 1 เลยในความหมายของ RAM** (คนละ process,
 คนละ interpreter) แต่ตอบถูกเป๊ะเพราะโหลดจาก checkpoint file — นี่คือ "external memory" ตัวจริง
-ต่างจาก `self.history` ของ Lab 7 ต้นฉบับที่ถ้าลองปิด-เปิด process ใหม่จะจำอะไรไม่ได้เลย
+ถ้าเก็บความจำไว้แค่ในตัวแปรของโปรแกรม (`self.history` ใน RAM) พอปิดโปรแกรมก็หายหมด เปิดใหม่จะจำอะไร
+ไม่ได้เลย — checkpoint คือสิ่งที่ทำให้มันไม่หาย
 
-### 2) Compaction ทำงานเหมือนต้นฉบับเป๊ะ
+### 2) Compaction ทำงานร่วมกับ checkpoint ได้ถูกต้อง
 
 ```
 === turn 2 ===
@@ -69,8 +56,7 @@ process ที่ 2 **ไม่มี state ใดๆ หลงเหลือ�
 [resume] โหลด memory ของ thread 'mem-test' -> history 5 ข้อความ, notes 1 รายการ
 ```
 
-`maybe_compact()` (โค้ดเดิมจาก Lab 7 ไม่เปลี่ยนแม้แต่บรรทัดเดียว) trigger ที่ `COMPACT_AFTER_MESSAGES
-= 12` พอดี แล้ว**สถานะหลัง compact ก็ถูก checkpoint ต่อทันที** (turn ถัดไปโหลดมาเห็น 5 ข้อความ
+`maybe_compact()` trigger ที่ `COMPACT_AFTER_MESSAGES = 12` พอดี แล้ว**สถานะหลัง compact ก็ถูก checkpoint ต่อทันที** (turn ถัดไปโหลดมาเห็น 5 ข้อความ
 ไม่ใช่ 12 ข้อความเดิม) — พิสูจน์ว่า compaction กับ checkpoint ทำงานร่วมกันถูกต้อง ไม่ชนกัน
 
 ### 3) Resume หลัง crash กลาง turn
@@ -114,3 +100,10 @@ python labs/lab5_memory_checkpoint/agent_loop.py "<คำถาม>" [thread_id]
 (ไม่ถูกอัปโหลดขึ้น GitHub เพราะเป็นข้อมูลตอนรัน ไม่ใช่โค้ด)
 
 ดูแบบฝึกหัดเพิ่มเติมที่ [QUESTIONS.md](QUESTIONS.md)
+
+---
+
+> **สำหรับผู้สอน/ผู้ตรวจ — ที่มาของโค้ด:** ดัดแปลงจาก `labs/lab7_memory/agent_memory.py` ของ repo ต้นทาง
+> - **คงไว้เหมือนเดิม:** class `ConversationMemory` ทั้งก้อน (`history` / `notes` / `context()` / `maybe_compact()`) — logic การจำและการสรุปไม่แก้เลย
+> - **ปรับ:** สลับ MCP tools (`ToolRegistry`) เป็น local tools ของ Lab 3 และแก้ถ้อยคำ `SYSTEM` — เพราะ repo นี้ไม่มี MCP server
+> - **เพิ่มใหม่:** checkpoint (บันทึก/โหลด JSON ต่อ `thread_id`) และ entry point แบบรับคำถามจาก CLI ทีละครั้ง
