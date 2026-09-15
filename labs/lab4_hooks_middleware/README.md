@@ -92,6 +92,37 @@ exception ของ OpenAI) ส่วน `"modify"` จะ merge `data` เข�
 
 ---
 
+## จากทฤษฎีสู่ของจริง: จุดที่ engine กับ hook ทั้ง 4 ตัวมาเจอกัน
+
+`build_default_hooks()` คือจุดที่เอา hook function ทั้ง 4 ตัวด้านบนไป `register()` เข้ากับ `HookManager`:
+
+```python
+def build_default_hooks() -> HookManager:
+    hooks = HookManager()
+    hooks.register("pre_tool", audit_log_hook)
+    hooks.register("pre_tool", guard_calculate_hook, matcher="calculate")
+    hooks.register("post_tool", redact_secrets_hook)
+    hooks.register("post_tool", audit_log_hook)
+    hooks.register("stop", require_number_on_stop_hook)
+    hooks.register("stop", audit_log_hook)
+    return hooks
+```
+
+จากนั้น `run_agent()` เป็นตัวเรียก `hooks.run(event, payload, ...)` จริงที่ 5 จุดในวง loop — ตรงนั้นแหละที่
+function ที่ `register()` ไว้ถูกเรียกทำงานจริง ลอง trace เคส "นิพจน์ยาวเกิน 40 ตัวอักษร" ดู:
+
+1. `run_agent()` เจอ tool call `calculate` → เรียก `hooks.run("pre_tool", {...}, tool_name="calculate")`
+2. `HookManager` ไล่ hook ที่ register กับ `pre_tool` ตามลำดับ: `audit_log_hook` (log แล้ว allow) ตามด้วย
+   `guard_calculate_hook` (matcher ตรงกับ `"calculate"` เช็คความยาว → คืน `deny`)
+3. เจอ `deny` → `HookManager` short-circuit ทันที ไม่เรียก hook ที่เหลือ
+4. `run_agent()` เห็น `decision == "deny"` → **ไม่เรียก `dispatch()` เลย** (`calculate()` จริงจาก Lab 3
+   ไม่ถูกรัน) แค่พิมพ์ข้อความปฏิเสธแทน
+
+เส้นทางเต็ม: **ออกแบบ (engine เปล่า) → Hook ตัวอย่าง (ชิ้นส่วน) → `build_default_hooks()` (เสียบเข้าเครื่อง)
+→ `run_agent()` (กดปุ่มให้ทำงานจริง)**
+
+---
+
 ## วิธีรัน
 
 รันจาก **root ของ repo** เสมอ (เพราะ import `labs.core.*` แบบเดียวกับ Lab 3):
