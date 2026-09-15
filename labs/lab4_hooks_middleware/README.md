@@ -81,7 +81,8 @@ exception ของ OpenAI) ส่วน `"modify"` จะ merge `data` เข�
    `modify` (ตัดช่องว่างหน้า-หลัง) ถ้าจำเป็น — defense-in-depth เพิ่มจาก whitelist ที่ `calculate()`
    ใน Lab 3 มีอยู่แล้ว
 3. **`redact_secrets_hook`** — เจอข้อความหน้าตาเหมือน API key (`sk-...`, ตามตัวอย่างจริงในเอกสาร
-   OpenAI Guardrails) ใน tool output ให้ redact **ก่อน** ป้อนกลับเข้า context ของ LLM
+   OpenAI Guardrails) ใน tool output ให้ **redact** (แทนที่ข้อความลับด้วย `[REDACTED]` ก่อนส่งต่อ
+   เหมือนเอกสารที่มีข้อความบางส่วนถูกปิดทับไม่ให้อ่านออก) **ก่อน** ป้อนกลับเข้า context ของ LLM
 4. **`require_number_on_stop_hook`** — ถ้าคำถามดูเหมือนโจทย์คำนวณแต่คำตอบไม่มีตัวเลขเลย ให้
    `deny` การจบ turn 1 ครั้ง แล้วบังคับให้ LLM ตอบใหม่
 
