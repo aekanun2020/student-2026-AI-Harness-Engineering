@@ -9,6 +9,8 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 
 | Lab | โฟลเดอร์ | สรุป |
 | --- | --- | --- |
+| 1 | [labs/lab1_setup](labs/lab1_setup) | ตรวจสภาพแวดล้อม (OpenRouter + MCP MSSQL Server) — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab1_setup) — ส่วน MCP จะ**ตรวจไม่ผ่าน**ใน repo นี้เสมอ เพราะไม่มี MCP server จริงให้ต่อ (LLM check ยังผ่านปกติ) |
+| 2 | [labs/lab2_llm](labs/lab2_llm) | เรียก LLM ครั้งแรก + เทียบหลายโมเดลบน OpenRouter — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab2_llm) |
 | 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab3_agent_loop) |
 | 3a | [labs/lab3a_self_correction](labs/lab3a_self_correction) | เติม self-correction ให้ Agent Loop ด้วยการแก้ `SYSTEM` prompt เพียงจุดเดียว (ไม่ใช้ hook) — ต่อยอดจาก Lab 3 โดยไม่แก้ไฟล์ Lab 3 เลย พร้อมโชว์ข้อจำกัดที่ prompt-only แก้ไม่ได้ ซึ่งเป็นเหตุผลที่ต้องมี Lab 4 |
 | 4 | [labs/lab4_hooks_middleware](labs/lab4_hooks_middleware) | ต่อยอด Lab 3 ด้วย Hooks/Middleware engine — รีเสิร์ชและออกแบบจากเอกสารจริงของ Anthropic ([Claude Code Hooks](https://code.claude.com/docs/en/hooks)) และ OpenAI ([Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/)) |
@@ -21,6 +23,8 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 pip install -r requirements.txt
 cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys
 
+python labs/lab1_setup/check_env.py            # LLM check ผ่าน, MCP check ไม่ผ่าน (ไม่มี server) — ตามคาด
+python labs/lab2_llm/first_llm.py "อธิบาย Agent Loop ใน 1 ประโยค"
 python labs/lab3_agent_loop/agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 python labs/lab3a_self_correction/agent_loop.py "กรุณาคำนวณนิพจน์นี้เป๊ะๆ ตามที่เขียน อย่าปรับรูปแบบ: 5,000+3,000"
 python labs/lab4_hooks_middleware/agent_loop_hooks.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
@@ -77,18 +81,19 @@ python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แ
 ### แต่ละ Lab ใน repo นี้อยู่ตรงไหนของ 8 Layer นี้
 
 สัญลักษณ์: ● = เป็นแกนหลักของ Lab นั้น · ◐ = แตะ/มีบางส่วน · (ว่าง) = ไม่มี — ตารางนี้เป็นของ repo นี้
-เอง (Lab 3/3a/4/5/6) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 1-2, 7-9
+เอง (Lab 1/2/3/3a/4/5/6) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 7-9 · คอลัมน์
+L1/L2 คงค่าตามที่ root README ของ repo ต้นทางให้ไว้ (ไฟล์เหมือนกันเป๊ะ ไม่ได้ประเมินใหม่)
 
-| Layer | Lab 3 | Lab 3a | Lab 4 | Lab 5 | Lab 6 |
-| --- | :--: | :--: | :--: | :--: | :--: |
-| 1. Instructions / Bootstrap | | ◐ | ◐ | | |
-| 2. Memory | | | | ● | |
-| 3. Tools + Skills | ● | ● | ● | ● | ● |
-| 4. Hooks | | | ● | | |
-| 5. Reasoning Loop (Agent Loop) | ● | ● | ● | ● | ● |
-| 6. Sandbox + Execution | ◐* | ◐* | ◐* | | ● |
-| 7. Gateway + Scheduler | | | | | |
-| 8. Safety Layer | ◐* | ◐* | ◐ | | ◐ |
+| Layer | Lab 1 | Lab 2 | Lab 3 | Lab 3a | Lab 4 | Lab 5 | Lab 6 |
+| --- | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| 1. Instructions / Bootstrap | | | | ◐ | ◐ | | |
+| 2. Memory | | | | | | ● | |
+| 3. Tools + Skills | ◐ | | ● | ● | ● | ● | ● |
+| 4. Hooks | | | | | ● | | |
+| 5. Reasoning Loop (Agent Loop) | | | ● | ● | ● | ● | ● |
+| 6. Sandbox + Execution | | | ◐* | ◐* | ◐* | | ● |
+| 7. Gateway + Scheduler | | | | | | | |
+| 8. Safety Layer | | | ◐* | ◐* | ◐ | | ◐ |
 
 > `◐*` = มีร่องรอย/พฤติกรรมคล้าย แต่ยังไม่ใช่ระบบจริงตามนิยาม layer (เช่น `calculate()`'s whitelist
 > eval เป็นการป้องกันแบบพื้นฐาน ไม่ใช่ sandbox จริงแบบ Docker/VM) · Lab 3a แตะ Layer 1 เพิ่มจาก Lab 3
