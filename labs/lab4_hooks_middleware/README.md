@@ -3,6 +3,10 @@
 > ต่อยอดจาก **[Lab 3 — Agent Loop](../lab3_agent_loop/README.md)** โดยไม่แก้ `agent_loop.py`
 > เดิมเลยแม้แต่บรรทัดเดียว — เพิ่ม hook engine เข้าไปห่อ loop เดิมรอบนอกเท่านั้น
 >
+> ก่อนหน้านี้มี **[Lab 3a — Self-Correction ด้วย prompt](../lab3a_self_correction/README.md)**
+> ที่ลองแก้ปัญหาเดียวกันด้วย `SYSTEM` prompt ล้วนๆ แล้วเจอข้อจำกัดว่าไม่การันตี — Lab 4 นี้แก้ปัญหา
+> แบบเดียวกันให้ **deterministic จริง** ด้วยโค้ด ไม่ใช่แค่ขอร้องผ่าน prompt
+>
 > ต้นทาง Lab 3: [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph)
 > (`labs/lab3_agent_loop/`) — repo หลักสูตร **Agentic AI Development with Python**
 >
