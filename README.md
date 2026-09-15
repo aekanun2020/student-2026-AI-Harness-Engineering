@@ -9,7 +9,7 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 
 | Lab | โฟลเดอร์ | สรุป |
 | --- | --- | --- |
-| 1 | [labs/lab1_setup](labs/lab1_setup) | ตรวจสภาพแวดล้อม (OpenRouter + MCP MSSQL Server) — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab1_setup) — ส่วน MCP จะ**ตรวจไม่ผ่าน**ใน repo นี้เสมอ เพราะไม่มี MCP server จริงให้ต่อ (LLM check ยังผ่านปกติ) |
+| 1 | [labs/lab1_setup](labs/lab1_setup) | ตรวจสภาพแวดล้อม — ดัดแปลงจาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab1_setup) โดยตัดส่วนตรวจ MCP MSSQL Server ออก (ไม่มี server ให้ต่อใน repo นี้) เหลือแค่ตรวจ OpenRouter (LLM) — ไฟล์นี้**ไม่ byte-identical** กับต้นฉบับ (ต่างจาก Lab 3 ที่ต้องคงไว้เพราะสไลด์อ้างอิงเลขบรรทัด) |
 | 2 | [labs/lab2_llm](labs/lab2_llm) | เรียก LLM ครั้งแรก + เทียบหลายโมเดลบน OpenRouter — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab2_llm) |
 | 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab3_agent_loop) |
 | 3a | [labs/lab3a_self_correction](labs/lab3a_self_correction) | เติม self-correction ให้ Agent Loop ด้วยการแก้ `SYSTEM` prompt เพียงจุดเดียว (ไม่ใช้ hook) — ต่อยอดจาก Lab 3 โดยไม่แก้ไฟล์ Lab 3 เลย พร้อมโชว์ข้อจำกัดที่ prompt-only แก้ไม่ได้ ซึ่งเป็นเหตุผลที่ต้องมี Lab 4 |
@@ -23,7 +23,7 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 pip install -r requirements.txt
 cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys
 
-python labs/lab1_setup/check_env.py            # LLM check ผ่าน, MCP check ไม่ผ่าน (ไม่มี server) — ตามคาด
+python labs/lab1_setup/check_env.py            # ตรวจ OpenRouter (LLM) เท่านั้น — ควรผ่าน
 python labs/lab2_llm/first_llm.py "อธิบาย Agent Loop ใน 1 ประโยค"
 python labs/lab3_agent_loop/agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 python labs/lab3a_self_correction/agent_loop.py "กรุณาคำนวณนิพจน์นี้เป๊ะๆ ตามที่เขียน อย่าปรับรูปแบบ: 5,000+3,000"
