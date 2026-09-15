@@ -26,3 +26,69 @@ python labs/lab4_hooks_middleware/test_hooks.py   # เทสโดยไม่�
 ```
 
 เข้าไปอ่าน README ของแต่ละ Lab เพื่อดูรายละเอียดเพิ่มเติม
+
+---
+
+## สถาปัตยกรรม Agent: App → Agent → LLM + 8 Layers
+
+> อ้างอิงมาจาก root README.md ของ [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph#สถาปัตยกรรม-agent-app--agent--llm--8-layers)
+> ใส่ไว้ที่นี่ด้วยเพื่อให้ลิงก์ "ตำแหน่งใน 8 Layer ของ repo" ที่ README ของแต่ละ Lab อ้างถึง
+> (เช่น [Lab 3](labs/lab3_agent_loop/README.md)) resolve ได้จริงในบริบท repo นี้
+
+เพื่อให้เข้าใจว่าแต่ละ Lab "กำลังสร้างชิ้นส่วนไหนของ Agent" หลักสูตรนี้ยึดภาพสถาปัตยกรรมเดียวกันทั้งหมด
+หัวใจคือ **LLM ทำหน้าที่ reasoning/decision** แต่สิ่งที่ทำให้มันเป็น "Agent" และประกอบขึ้นเป็น "App" จริง
+คือ layer ที่ห่อรอบ LLM ต่างหาก
+
+```
+┌──────────────────────────────────────────────┐
+│                    APP                         │
+│  + UI, Auth, DB, Business Logic, Infra         │
+│  ┌──────────────────────────────────────────┐ │
+│  │              AGENT                        │ │
+│  │  + Memory, Tools, Hooks, State            │ │
+│  │   ┌────────────────────────────────┐      │ │
+│  │   │           LLM                  │      │ │
+│  │   │  (reasoning / decision)        │      │ │
+│  │   └────────────────────────────────┘      │ │
+│  └──────────────────────────────────────────┘ │
+└──────────────────────────────────────────────┘
+```
+
+กางภาพข้างบนออกเป็น **8 layer** ของ Agent harness — แต่ละ layer มีคำอธิบายและ **แหล่งอ้างอิงต้นทาง**
+(origin paper / เอกสารทางการของบริษัทเทคโนโลยี) ที่เข้าดูได้จริง:
+
+| # | Layer | ทำหน้าที่อะไร | แหล่งอ้างอิงต้นทาง (เปิดดูได้จริง) |
+| :-: | --- | --- | --- |
+| 1 | **Instructions / Bootstrap** | คำสั่งระบบ/บุคลิก/ขอบเขตที่โหลดตอนเริ่ม (เช่น `SOUL.md`, `AGENTS.md`) — กำหนดพฤติกรรมก่อนโมเดลเห็นงาน | Anthropic — [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) |
+| 2 | **Memory** | ความจำสั้น/ยาว/procedural + compaction + note-taking | CoALA: [Cognitive Architectures for Language Agents](https://arxiv.org/abs/2309.02427) (Sumers et al., 2024) · Anthropic — [context engineering: compaction & note-taking](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) |
+| 3 | **Tools + Skills** | ความสามารถภายนอก (MCP) + procedure ที่นำกลับมาใช้ซ้ำ (Skills) โหลดตามความจำเป็น | Anthropic — [Introducing the Model Context Protocol](https://www.anthropic.com/news/model-context-protocol) · [Agent Skills (Claude Docs)](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview) |
+| 4 | **Hooks** | callback ที่ดักจังหวะ lifecycle ของ agent (เช่น `PreToolUse`/`PostToolUse`/`Stop`) เพื่อ log/บล็อก/แทรก context แบบ deterministic | Anthropic — [Claude Code Hooks reference](https://code.claude.com/docs/en/hooks) |
+| 5 | **Reasoning Loop (Agent Loop)** | วงคิด-ทำ-สังเกต (reason → act → observe → วน) แกนของ agent | ReAct: [Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629) (Yao et al., ICLR 2023) |
+| 6 | **Sandbox + Execution** | ที่รันโค้ด/คำสั่งที่โมเดลสร้างขึ้นแบบแยกขอบเขต (Docker/VM/Computer Use) | Anthropic — [Computer use tool](https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/computer-use-tool) · [Code execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp) |
+| 7 | **Gateway + Scheduler** | ช่องทางเข้า-ออกประตูเดียว (HTTP/Telegram/Slack) + ตัวกระตุ้นตามเวลา/เหตุการณ์ (Cron/Webhook) | **Gateway:** AWS — [Amazon Bedrock AgentCore Gateway: single secure entry point for agents](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html) · วิชาการ: Nowaczyk — [Architectures for Building Agentic AI](https://arxiv.org/abs/2512.09458) (แนวคิด Execution Gateway) · **Scheduler:** Dust — [Introducing Triggers (Schedule + Webhook)](https://dust.tt/blog/introducing-triggers-your-agents-working-while-you-sleep) |
+| 8 | **Safety Layer** | permission gating, audit trail, self-check + containment ที่ environment layer | Anthropic — [How we contain Claude across products](https://www.anthropic.com/engineering/how-we-contain-claude) |
+
+> หมายเหตุ: CoALA (layer 2), ReAct (layer 5) และ Architectures for Building Agentic AI (layer 7) เป็น academic paper · MCP/Skills/Hooks/Computer Use/Containment เป็นเอกสารทางการของ Anthropic · AgentCore Gateway (layer 7) เป็นเอกสาร AWS · Triggers (layer 7) เป็นเอกสาร Dust
+
+### แต่ละ Lab ใน repo นี้อยู่ตรงไหนของ 8 Layer นี้
+
+สัญลักษณ์: ● = เป็นแกนหลักของ Lab นั้น · ◐ = แตะ/มีบางส่วน · (ว่าง) = ไม่มี — ตารางนี้เป็นของ repo นี้
+เอง (Lab 3/3a/4) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 1-2, 5-9
+
+| Layer | Lab 3 | Lab 3a | Lab 4 |
+| --- | :--: | :--: | :--: |
+| 1. Instructions / Bootstrap | | ◐ | ◐ |
+| 2. Memory | | | |
+| 3. Tools + Skills | ◐ | ◐ | ◐ |
+| 4. Hooks | | | ● |
+| 5. Reasoning Loop (Agent Loop) | ● | ● | ● |
+| 6. Sandbox + Execution | ◐* | ◐* | ◐* |
+| 7. Gateway + Scheduler | | | |
+| 8. Safety Layer | ◐* | ◐* | ◐ |
+
+> `◐*` = มีร่องรอย/พฤติกรรมคล้าย แต่ยังไม่ใช่ระบบจริงตามนิยาม layer (เช่น `calculate()`'s whitelist
+> eval เป็นการป้องกันแบบพื้นฐาน ไม่ใช่ sandbox จริงแบบ Docker/VM) · Lab 3a แตะ Layer 1 เพิ่มจาก Lab 3
+> เพราะแก้ `SYSTEM` prompt (Instructions) เพื่อสั่ง self-correction
+>
+> **ช่องว่างที่ยังไม่มี Lab ไหนครอบคลุมเลย:** Layer 2 (Memory/checkpoint), Layer 6 (Sandbox จริง),
+> Layer 7 (Gateway/Scheduler) — Layer 2+6 นี้เองที่กำลังพิจารณาแยกเป็น Lab ใหม่ (ดูหัวข้อถัดไป)
