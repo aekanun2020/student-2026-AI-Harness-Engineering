@@ -1,7 +1,6 @@
 # Lab 1 — ติดตั้งและตรวจสอบสภาพแวดล้อม
 
-> ดัดแปลงจาก [labs/lab1_setup/](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab1_setup)
-> ของ [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph) — ต้นฉบับตรวจ
+> ดัดแปลงจาก Lab 1 ของ repo ต้นทางของหลักสูตร — ต้นฉบับตรวจ
 > 2 อย่าง (LLM + MCP MSSQL Server) แต่ **repo นี้ไม่มี MCP server ให้ต่อเลย** จึงตัดส่วนตรวจ MCP ออก
 > เหลือแค่การตรวจ LLM ซึ่งเป็น precondition ที่ Lab อื่นในนี้ใช้จริง
 >

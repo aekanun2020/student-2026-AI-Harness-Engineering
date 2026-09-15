@@ -1,8 +1,8 @@
 # Lab 5 — Memory (Compaction + Notes) + Checkpoint
 
 > ต่อยอดจาก **[Lab 3 — Agent Loop](../lab3_agent_loop/README.md)** และดัดแปลงจาก
-> [labs/lab7_memory/agent_memory.py](https://github.com/aekanun2020/Python-Agent-LangGraph/blob/main/labs/lab7_memory/agent_memory.py)
-> ของ Python-Agent-LangGraph — คง `ConversationMemory` (history/notes/compaction) ไว้ใกล้เคียง
+> `labs/lab7_memory/agent_memory.py` ของ repo ต้นทางของหลักสูตร (Lab 7 ไม่ได้อยู่ใน repo นี้ —
+> ส่วนที่ใช้ถูกคัดลอกมาไว้ในไฟล์ของ Lab นี้แล้ว) — คง `ConversationMemory` (history/notes/compaction) ไว้ใกล้เคียง
 > ต้นฉบับที่สุด แล้วเพิ่ม **checkpoint** เข้าไปเพื่อให้ "external memory" ที่ต้นฉบับอ้างว่ามี
 > กลายเป็น external จริง (ดูหัวข้อ "สิ่งที่ต่างจากต้นฉบับ" ด้านล่าง)
 >

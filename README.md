@@ -1,20 +1,20 @@
 # student-2026-AI-Harness-Engineering
 
-Repo เก็บงาน/แบบฝึกหัดของหลักสูตร **Agentic AI Development with Python** ต่อยอดจาก
-[Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph) — โครงสร้าง
-โฟลเดอร์ `labs/` และชื่อไฟล์ **เหมือนกับ repo ต้นทางเป๊ะ** (`labs/core/`, `labs/lab3_agent_loop/`
-ฯลฯ) เพื่อให้เอกสาร/สไลด์ที่อ้างอิง path และเลขบรรทัดของโค้ดยังใช้ได้ต่อเนื่อง
+Repo เก็บงาน/แบบฝึกหัดของหลักสูตร **Agentic AI Development with Python** ต่อยอดจาก repo ต้นทางของ
+หลักสูตร (Python-Agent-LangGraph) — โครงสร้างโฟลเดอร์ `labs/` และชื่อไฟล์ **เหมือนกับ repo ต้นทางเป๊ะ**
+(`labs/core/`, `labs/lab3_agent_loop/` ฯลฯ) เพื่อให้เอกสาร/สไลด์ที่อ้างอิง path และเลขบรรทัดของโค้ดยังใช้ได้
+ต่อเนื่อง — **ผู้เรียนทำทุกอย่างใน repo นี้ที่เดียว ไม่ต้องเปิด repo ต้นทาง** (ลิงก์สำหรับผู้ตรวจอยู่ท้ายหน้า)
 
 ## รายการงาน
 
 | Lab | โฟลเดอร์ | สรุป |
 | --- | --- | --- |
-| 1 | [labs/lab1_setup](labs/lab1_setup) | ตรวจสภาพแวดล้อม — ดัดแปลงจาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab1_setup) โดยตัดส่วนตรวจ MCP MSSQL Server ออก (ไม่มี server ให้ต่อใน repo นี้) เหลือแค่ตรวจ OpenRouter (LLM) — ไฟล์นี้**ไม่ byte-identical** กับต้นฉบับ (ต่างจาก Lab 3 ที่ต้องคงไว้เพราะสไลด์อ้างอิงเลขบรรทัด) |
-| 2 | [labs/lab2_llm](labs/lab2_llm) | เรียก LLM ครั้งแรก + เทียบหลายโมเดลบน OpenRouter — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab2_llm) |
-| 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab3_agent_loop) |
+| 1 | [labs/lab1_setup](labs/lab1_setup) | ตรวจสภาพแวดล้อม — ดัดแปลงจาก Lab 1 ของ repo ต้นทาง โดยตัดส่วนตรวจ MCP MSSQL Server ออก (ไม่มี server ให้ต่อใน repo นี้) เหลือแค่ตรวจ OpenRouter (LLM) — ไฟล์นี้**ไม่ byte-identical** กับต้นฉบับ (ต่างจาก Lab 3 ที่ต้องคงไว้เพราะสไลด์อ้างอิงเลขบรรทัด) |
+| 2 | [labs/lab2_llm](labs/lab2_llm) | เรียก LLM ครั้งแรก + เทียบหลายโมเดลบน OpenRouter — สำเนา byte-ต่อ-byte จาก Lab 2 ของ repo ต้นทาง |
+| 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก Lab 3 ของ repo ต้นทาง |
 | 3a | [labs/lab3a_self_correction](labs/lab3a_self_correction) | เติม self-correction ให้ Agent Loop ด้วยการแก้ `SYSTEM` prompt เพียงจุดเดียว (ไม่ใช้ hook) — ต่อยอดจาก Lab 3 โดยไม่แก้ไฟล์ Lab 3 เลย พร้อมโชว์ข้อจำกัดที่ prompt-only แก้ไม่ได้ ซึ่งเป็นเหตุผลที่ต้องมี Lab 4 |
 | 4 | [labs/lab4_hooks_middleware](labs/lab4_hooks_middleware) | ต่อยอด Lab 3 ด้วย Hooks/Middleware engine — รีเสิร์ชและออกแบบจากเอกสารจริงของ Anthropic ([Claude Code Hooks](https://code.claude.com/docs/en/hooks)) และ OpenAI ([Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/)) |
-| 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction + Notes ดัดแปลงจาก [lab7_memory/agent_memory.py](https://github.com/aekanun2020/Python-Agent-LangGraph/blob/main/labs/lab7_memory/agent_memory.py)) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
+| 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction + Notes ดัดแปลงจาก `lab7_memory/agent_memory.py` ของ repo ต้นทาง) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
 | 6 | [labs/lab6_sandbox](labs/lab6_sandbox) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + `RLIMIT_CPU`) — ทดสอบจริงด้วยการบังคับ resource exhaustion (`9999**99999999`) แล้วยืนยันว่า agent loop หลักไม่กระทบ พร้อมบันทึกบั๊กจริงเรื่อง `RLIMIT_AS` ใช้ไม่ได้บน macOS |
 
 ## สำหรับผู้เรียนที่เคยใช้แค่หน้าแชท (ChatGPT / Claude) — อ่านตรงนี้ก่อน
@@ -101,6 +101,9 @@ python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แ
 ## สถาปัตยกรรม Agent: App → Agent → LLM + 8 Layers
 
 > อ้างอิงมาจาก root README.md ของ [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph#สถาปัตยกรรม-agent-app--agent--llm--8-layers)
+> — **นี่คือลิงก์เดียวไป repo ต้นทางในเอกสารชุดนี้** เก็บไว้สำหรับผู้ตรวจที่ต้องการยืนยันว่าไฟล์ที่ระบุ
+> byte-identical ตรงกับต้นฉบับจริง (ผู้เรียนไม่ต้องเปิด — repo นั้นมี 9 Lab, ใช้ conda และต่อ MCP server
+> ซึ่งต่างจาก repo นี้ เปิดไปอาจสับสน)
 > ใส่ไว้ที่นี่ด้วยเพื่อให้ลิงก์ "ตำแหน่งใน 8 Layer ของ repo" ที่ README ของแต่ละ Lab อ้างถึง
 > (เช่น [Lab 3](labs/lab3_agent_loop/README.md)) resolve ได้จริงในบริบท repo นี้
 

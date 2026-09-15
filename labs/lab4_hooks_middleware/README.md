@@ -7,8 +7,8 @@
 > ที่ลองแก้ปัญหาเดียวกันด้วย `SYSTEM` prompt ล้วนๆ แล้วเจอข้อจำกัดว่าไม่การันตี — Lab 4 นี้แก้ปัญหา
 > แบบเดียวกันให้ **deterministic จริง** ด้วยโค้ด ไม่ใช่แค่ขอร้องผ่าน prompt
 >
-> ต้นทาง Lab 3: [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph)
-> (`labs/lab3_agent_loop/`) — repo หลักสูตร **Agentic AI Development with Python**
+> ต้นทาง Lab 3: `labs/lab3_agent_loop/` ของ repo ต้นทางของหลักสูตร **Agentic AI Development with Python**
+> (สำเนาอยู่ใน repo นี้แล้ว ไม่ต้องเปิด repo ต้นทาง)
 >
 > ดูคำถามตัวอย่างและแบบฝึกหัดแยกไว้ที่ [QUESTIONS.md](QUESTIONS.md)
 
