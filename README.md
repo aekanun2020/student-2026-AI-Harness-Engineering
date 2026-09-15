@@ -14,7 +14,7 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 | 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก Lab 3 ของ repo ต้นทาง |
 | 3a | [labs/lab3a_self_correction](labs/lab3a_self_correction) | เติม self-correction ให้ Agent Loop ด้วยการแก้ `SYSTEM` prompt เพียงจุดเดียว (ไม่ใช้ hook) — ต่อยอดจาก Lab 3 โดยไม่แก้ไฟล์ Lab 3 เลย พร้อมโชว์ข้อจำกัดที่ prompt-only แก้ไม่ได้ ซึ่งเป็นเหตุผลที่ต้องมี Lab 4 |
 | 4 | [labs/lab4_hooks_middleware](labs/lab4_hooks_middleware) | ต่อยอด Lab 3 ด้วย Hooks/Middleware engine — รีเสิร์ชและออกแบบจากเอกสารจริงของ Anthropic ([Claude Code Hooks](https://code.claude.com/docs/en/hooks)) และ OpenAI ([Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/)) |
-| 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction ดัดแปลงจาก `lab7_memory/agent_memory.py` ของ repo ต้นทาง) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
+| 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction ดัดแปลงจาก `lab7_memory/agent_memory.py` ของ repo ต้นทาง + Tool-result clearing ที่เพิ่มใหม่ พร้อม tool `read_file` ที่คืนทั้งไฟล์ให้มีของก้อนใหญ่ให้ล้าง) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง clearing (prompt ~9,700 → ~1,300 token), compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
 | 6 | [labs/lab6_sandbox](labs/lab6_sandbox) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + `RLIMIT_CPU`) — ทดสอบจริงด้วยการบังคับ resource exhaustion (`9999**99999999`) แล้วยืนยันว่า agent loop หลักไม่กระทบ พร้อมบันทึกบั๊กจริงเรื่อง `RLIMIT_AS` ใช้ไม่ได้บน macOS |
 
 ## สำหรับผู้เรียนที่เคยใช้แค่หน้าแชท (ChatGPT / Claude) — อ่านตรงนี้ก่อน
@@ -56,7 +56,8 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 | `[step N] END_TURN` | AI พอใจแล้ว ไม่ขอใช้ tool อีก กำลังจะตอบ |
 | `[answer] …` | คำตอบสุดท้าย — สิ่งที่คุณจะเห็นถ้านี่เป็นหน้าแชท |
 | `HOOK …` (Lab 4) | ระบบตรวจ (hook) ดักไว้ — บล็อกหรือแก้ไขบางอย่างก่อน AI ทำต่อ |
-| `[resume] …` / `[compaction] …` (Lab 5) | โหลดความจำเก่ากลับมา / สรุปบทสนทนาเก่าเพื่อประหยัดที่ |
+| `[resume] …` / `[clear] …` / `[compaction] …` (Lab 5) | โหลดความจำเก่ากลับมา / ล้างผล tool ก้อนใหญ่ของรอบก่อน / สรุปบทสนทนาเก่าเพื่อประหยัดที่ |
+| `[token] prompt=… completion=…` (Lab 2, 5) | ขนาดของสิ่งที่ส่งให้ AI และคำตอบ นับเป็น token — ยิ่ง `prompt` ใหญ่ยิ่งแพง |
 
 ### ค่าใช้จ่าย
 
@@ -163,10 +164,11 @@ L1/L2 ประเมินใหม่จากไฟล์ที่ดัด�
 | 5. Reasoning Loop (Agent Loop) | | | ● | ● | ● | ● | ● |
 | 6. Sandbox + Execution | | | ◐* | ◐* | ◐* | | ● |
 | 7. Gateway + Scheduler | | | | | | | |
-| 8. Safety Layer | | | ◐* | ◐* | ◐ | | ◐ |
+| 8. Safety Layer | | | ◐* | ◐* | ◐ | ◐* | ◐ |
 
 > `◐*` = มีร่องรอย/พฤติกรรมคล้าย แต่ยังไม่ใช่ระบบจริงตามนิยาม layer (เช่น `calculate()`'s whitelist
-> eval เป็นการป้องกันแบบพื้นฐาน ไม่ใช่ sandbox จริงแบบ Docker/VM) · Lab 3a แตะ Layer 1 เพิ่มจาก Lab 3
+> eval เป็นการป้องกันแบบพื้นฐาน ไม่ใช่ sandbox จริงแบบ Docker/VM · Lab 5 แตะ Layer 8 ตรงที่ `read_file`
+> กันไม่ให้อ่านนอกโฟลเดอร์ repo และไฟล์ที่ขึ้นต้นด้วยจุดอย่าง `.env`) · Lab 3a แตะ Layer 1 เพิ่มจาก Lab 3
 > เพราะแก้ `SYSTEM` prompt (Instructions) เพื่อสั่ง self-correction
 >
 > **Layer 3 (Tools):** "Tools" ในตารางนี้หมายถึง function ใดๆ ที่ LLM เรียกใช้ได้จริง ไม่ว่าจะผ่าน

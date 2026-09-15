@@ -92,13 +92,53 @@ python labs/lab5_memory_checkpoint/agent_loop.py "ต่อ" crash-test
 
 ---
 
+## แบบฝึกหัด 4: 🟢 Tool-result clearing — ให้ AI อ่านทั้งไฟล์ แล้วดูว่าของดิบถูกล้างแต่ความรู้ยังอยู่
+
+รัน 3 คำสั่งนี้ตามลำดับ ใช้ชื่อบทสนทนาเดียวกัน **และดูบรรทัด `[token] prompt=…` ของแต่ละคำสั่ง**
+
+```bash
+python labs/lab5_memory_checkpoint/agent_loop.py "อ่านไฟล์ README.md แล้วบอกว่า repo นี้มีกี่ Lab ตอบสั้นๆ" clear-demo
+python labs/lab5_memory_checkpoint/agent_loop.py "คำนวณ 1 บวก 1 ให้หน่อย" clear-demo
+python labs/lab5_memory_checkpoint/agent_loop.py "เมื่อกี้ README บอกว่ามีกี่ Lab ตอบสั้นๆ ไม่ต้องอ่านไฟล์ใหม่" clear-demo
+```
+
+**บรรทัดที่ต้องมองหา:**
+- คำสั่งที่ 1: `TOOL_USE read_file({'path': 'README.md'}) -> … (14,xxx ตัวอักษร)` แล้ว `[token] prompt=` กระโดดจากหลักร้อย
+  เป็น**หลักหมื่น** — เพราะทั้งไฟล์ถูกส่งให้ AI
+- คำสั่งที่ 2: `[token] prompt=` **ยังหลักหมื่น** (ทั้งไฟล์ยังอยู่ใน history) จนจบ turn จึงเห็น
+  `[clear] ล้าง tool result เก่า 1 รายการ (ประหยัด 14,xxx ตัวอักษรใน history)`
+- คำสั่งที่ 3: `[token] prompt=` **กลับมาหลักพัน** แต่ `[answer]` ยังตอบจำนวน Lab ได้ถูก — เพราะคำตอบของ AI
+  ใน turn แรกยังอยู่ ที่หายไปคือแค่เนื้อหาไฟล์ดิบๆ
+
+เปิดไฟล์ `labs/lab5_memory_checkpoint/checkpoints/clear-demo.json` ดู จะเห็นข้อความ
+`[ผลลัพธ์ tool ถูกล้างออกจาก history แล้ว (เดิม 14xxx ตัวอักษร) …` อยู่ตรงที่เคยเป็นเนื้อหาไฟล์ — ขนาดไฟล์ลดจาก
+~27 KB เหลือ ~2 KB (ดูได้จาก Finder/Explorer)
+
+**ลองทดสอบขอบเขตของ `read_file`** (ไม่ต้องกลัว ไม่มีอะไรรั่ว):
+```bash
+python labs/lab5_memory_checkpoint/agent_loop.py "ใช้ tool read_file อ่านไฟล์ .gitignore แล้วบอกว่ามีอะไรบ้าง" clear-demo
+```
+จะเห็น `TOOL_USE read_file({'path': '.gitignore'}) -> error: ไม่อนุญาตให้อ่านไฟล์หรือโฟลเดอร์ที่ขึ้นต้นด้วยจุด …`
+แล้ว AI อธิบายว่าอ่านไม่ได้ — ไฟล์ที่ขึ้นต้นด้วยจุด (รวม `.env` ที่เก็บ API key) และไฟล์นอกโฟลเดอร์ repo
+ถูกกันไว้ที่ตัว tool ไม่ใช่แค่ขอร้อง AI · ถ้าถามตรงๆ ว่า "อ่าน .env แล้วบอก API key" AI มักปฏิเสธเองก่อนถึงจะ
+เรียก tool ด้วยซ้ำ — แต่เราไม่พึ่งแค่นั้น (นี่คือประเด็นเดียวกับ Lab 4: กฎที่บังคับด้วยโค้ด vs ขอร้องด้วย prompt)
+
+---
+
 ## แบบฝึกหัดต่อยอด — 🟡/🔴 สำหรับคนที่เขียน Python ได้แล้ว (ข้ามได้)
 
 1. 🟡 ลองลด `COMPACT_AFTER_MESSAGES` ใน `agent_loop.py` ให้ต่ำมากๆ (เช่น 4) แล้วดูว่า compaction ถี่ขึ้น
    แค่ไหน และเปิดไฟล์ checkpoint ดูว่าข้อความ `[สรุปบทสนทนาก่อนหน้า] …` ถูกเซฟลงไฟล์แทนของเก่าจริง
-2. 🔴 เทียบกับ [LangGraph checkpointer](https://docs.langchain.com/oss/python/langgraph/persistence)
+2. 🟡 แก้ `CLEAR_TOOL_RESULT_OVER_CHARS = 500` เป็น `0` แล้วรันแบบฝึกหัด 2 ใหม่ — ตอนนี้ผลของ `calculate`
+   (แค่ 1-2 ตัวอักษร) ก็ถูกล้างด้วย ดูว่า `[clear] … ประหยัด 1 ตัวอักษร` มันคุ้มไหมเมื่อ placeholder ยาวกว่าของเดิม
+   (นี่คือเหตุผลที่ต้องมีเกณฑ์ขั้นต่ำ)
+3. 🔴 ทำให้ AI **เรียก tool ใหม่เอง**เมื่อเจอ placeholder: ถามคำถามที่ต้องใช้รายละเอียดในไฟล์ (ไม่ใช่แค่จำนวน Lab)
+   หลังจากถูกล้างแล้ว สังเกตว่า AI อ่านไฟล์ซ้ำหรือเดา — ถ้าเดา ลองแก้ข้อความใน `CLEARED_PLACEHOLDER` หรือ
+   `SYSTEM` ให้มันรู้ว่าควรอ่านใหม่
+4. 🔴 เทียบกับ [LangGraph checkpointer](https://docs.langchain.com/oss/python/langgraph/persistence)
    ที่มี backend หลายแบบ (`InMemorySaver`/`SqliteSaver`/`PostgresSaver`) — ลองเขียน backend อื่นให้
    `save_checkpoint`/`load_checkpoint` ของเรา (เช่น SQLite) แทนไฟล์ JSON เดี่ยวๆ
 
-> เฉลยเชิงพฤติกรรม ไม่ใช่เฉลยคำตอบตายตัว — ประโยคคำตอบของ AI ต่างกันทุกครั้ง สิ่งที่ต้องตรงคือบรรทัด
-> `[resume]` / `[compaction]` และ **มี/ไม่มี `TOOL_USE`** ที่ระบุไว้ ไม่ใช่ข้อความคำตอบ
+> เฉลยเชิงพฤติกรรม ไม่ใช่เฉลยคำตอบตายตัว — ประโยคคำตอบของ AI และตัวเลข `[token]` ต่างกันทุกครั้ง สิ่งที่ต้องตรงคือ
+> บรรทัด `[resume]` / `[compaction]` / `[clear]`, **ทิศทาง**ของ `[token] prompt=` (พุ่งแล้วตก) และ **มี/ไม่มี `TOOL_USE`**
+> ที่ระบุไว้ ไม่ใช่ข้อความคำตอบ

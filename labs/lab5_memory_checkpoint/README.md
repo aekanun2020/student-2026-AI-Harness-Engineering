@@ -1,8 +1,9 @@
-# Lab 5 — Memory (Compaction) + Checkpoint
+# Lab 5 — Memory (Tool-result clearing + Compaction) + Checkpoint
 
 > ต่อยอดจาก **[Lab 3 — Agent Loop](../lab3_agent_loop/README.md)** — ส่วนความจำ (`ConversationMemory`:
-> history + compaction) นำมาจากบทเรียนเรื่อง memory ของหลักสูตร แล้วเพิ่ม **checkpoint** เข้าไปเพื่อให้
-> ความจำนั้นอยู่รอดแม้ปิดโปรแกรมแล้วเปิดใหม่ (ทุกอย่างที่ต้องใช้อยู่ในโฟลเดอร์นี้แล้ว)
+> history + compaction) นำมาจากบทเรียนเรื่อง memory ของหลักสูตร แล้วเพิ่ม **tool-result clearing**
+> (วิธีประหยัด context แบบไม่ต้องเรียก LLM) กับ **checkpoint** (ให้ความจำอยู่รอดแม้ปิดโปรแกรมแล้วเปิดใหม่)
+> — ทุกอย่างที่ต้องใช้อยู่ในโฟลเดอร์นี้แล้ว
 >
 > Sandbox แยกออกไปอยู่ **[Lab 6](../lab6_sandbox/README.md)** เพราะเป็นคนละ Layer (6 vs 2)
 
@@ -10,8 +11,11 @@
 
 ## จุดประสงค์การเรียนรู้
 
+- เข้าใจ **Tool-result clearing** — ผลลัพธ์ดิบก้อนใหญ่จาก tool (เช่น เนื้อหาทั้งไฟล์) ของ turn ที่จบไปแล้ว
+  ถูกแทนด้วยข้อความสั้นๆ 1 บรรทัด เพราะ AI สรุปสิ่งที่ได้จากมันไว้ในคำตอบแล้ว — **ไม่ต้องเรียก LLM**
+  จึงเป็นวิธีประหยัด context ที่ถูกที่สุด และควรทำก่อน compaction
 - เข้าใจ **Compaction** — เมื่อบทสนทนายาวเกินเกณฑ์ ให้ LLM สรุปของเก่าเป็นย่อหน้าเดียวเพื่อรักษา
-  token budget โดยไม่ทิ้งข้อมูลสำคัญ
+  token budget โดยไม่ทิ้งข้อมูลสำคัญ (แพงกว่า clearing เพราะต้องเรียก LLM 1 ครั้ง)
 - เข้าใจความต่างระหว่าง **"memory ที่อยู่ใน RAM"** (หายเมื่อ process ตาย) กับ **"external memory
   ที่รอดข้าม context reset จริง"** (ต้อง persist ลงดิสก์/DB)
 - เห็น **checkpoint** — การบันทึกสถานะลงไฟล์เป็นระยะ เพื่อให้ปิดโปรแกรมแล้วเปิดใหม่ก็คุยต่อได้ และถ้า
@@ -23,7 +27,7 @@ Lab นี้สร้างสิ่งนั้นเองให้เห็�
 
 ---
 
-## ทดสอบจริงทั้ง 3 อย่าง (ไม่ใช่แค่ทฤษฎี)
+## ทดสอบจริงทั้ง 4 อย่าง (ไม่ใช่แค่ทฤษฎี)
 
 ### 1) External memory รอดข้าม process จริง
 
@@ -49,7 +53,7 @@ process ที่ 2 **ไม่มี state ใดๆ หลงเหลือ�
 === turn 2 ===
 [user] คำนวณ 2 บวก 2 ให้หน่อย
 [answer] ผลลัพธ์ของ 2 + 2 = 4 ครับ
-[compaction] ย่อ 10 ข้อความเป็นสรุป 1 ก้อน (เหลือ 5 ข้อความ)
+[compaction] ย่อ 8 ข้อความเป็นสรุป 1 ก้อน (เหลือ 5 ข้อความ)
 
 === turn 3 (process ใหม่) ===
 [resume] โหลด memory ของ thread 'mem-test' -> history 5 ข้อความ
@@ -57,6 +61,11 @@ process ที่ 2 **ไม่มี state ใดๆ หลงเหลือ�
 
 `maybe_compact()` trigger ที่ `COMPACT_AFTER_MESSAGES = 12` พอดี แล้ว**สถานะหลัง compact ก็ถูก checkpoint ต่อทันที** (turn ถัดไปโหลดมาเห็น 5 ข้อความ
 ไม่ใช่ 12 ข้อความเดิม) — พิสูจน์ว่า compaction กับ checkpoint ทำงานร่วมกันถูกต้อง ไม่ชนกัน
+
+จุดที่ปรับจากต้นฉบับ: ต้นฉบับ "เก็บ 4 ข้อความล่าสุด" ตายตัว ซึ่งถ้า turn ล่าสุดไม่ได้ใช้ tool (2 ข้อความ) จะตัด
+กลางคู่ `tool_calls`/`tool` ของ turn ก่อนหน้า แล้ว API ปฏิเสธทั้งคำขอ — ที่นี่จึงถอยไปตัดที่**ต้น turn** (ข้อความ
+`user`) เสมอ ทดสอบแล้วด้วยการสลับ turn ที่ใช้/ไม่ใช้ tool 8 รอบ ไม่มี error (จำนวนที่ย่อจึงอาจไม่ใช่ 8 เป๊ะ เช่น
+`ย่อ 6 ข้อความ … เหลือ 7` ก็ถูกต้อง)
 
 ### 3) Resume หลัง crash กลาง turn
 
@@ -85,6 +94,46 @@ checkpoint บนดิสก์: `pending: True, history len: 3` — รัน�
 ใช้เลข `19` (นาทีจาก `get_time` ที่บันทึกไว้ก่อนถูกฆ่า) **ไม่เรียก `get_time` ซ้ำ** — พิสูจน์ resume
 ใช้ state เดิมจริง
 
+### 4) Tool-result clearing — ของดิบก้อนใหญ่หายไป แต่ความรู้ยังอยู่
+
+Lab นี้เพิ่ม tool `read_file` ที่คืน**เนื้อหาทั้งไฟล์** เพื่อให้มี tool result ก้อนใหญ่จริงๆ (ผลของ `calculate`
+มีแค่ไม่กี่ตัวอักษร ไม่มีอะไรให้ล้าง) — บรรทัด `[token] prompt=…` คือขนาดของทุกอย่างที่ส่งให้ AI ในครั้งนั้น
+
+```
+=== turn 1 ===
+[user] อ่านไฟล์ README.md แล้วบอกว่า repo นี้มีกี่ Lab ตอบสั้นๆ
+[token] prompt=939 completion=83
+           TOOL_USE read_file({'path': 'README.md'}) -> # student-2026-AI-Harness-Engineering ... (14,417 ตัวอักษร)
+[token] prompt=9625 completion=64
+[answer] Repo นี้มีทั้งหมด 7 Lab ได้แก่ Lab 1, Lab 2, Lab 3, Lab 3a, Lab 4, Lab 5 และ Lab 6 ครับ
+>>> ไฟล์ checkpoint: 26,886 bytes
+
+=== turn 2 (process ใหม่) ===
+[user] คำนวณ 1 บวก 1 ให้หน่อย
+[token] prompt=9715 completion=53          <- ยังแบกทั้งไฟล์อยู่ (turn ที่แล้วยังไม่ถูกล้าง)
+[answer] 1 + 1 = 2 ครับ
+[clear] ล้าง tool result เก่า 1 รายการ (ประหยัด 14,417 ตัวอักษรใน history)
+>>> ไฟล์ checkpoint: 1,798 bytes
+
+=== turn 3 (process ใหม่) ===
+[user] เมื่อกี้ README บอกว่ามีกี่ Lab ตอบสั้นๆ ไม่ต้องอ่านไฟล์ใหม่
+[token] prompt=1340 completion=14          <- เล็กลง 7 เท่า
+[answer] มี 7 Lab ครับ
+```
+
+หลังล้าง prompt ลดจาก ~9,700 เหลือ ~1,300 token และไฟล์ checkpoint จาก ~27 KB เหลือ ~2 KB แต่ AI
+ยังตอบ "7 Lab" ได้ถูก เพราะ**คำตอบของมันเองใน turn 1 ยังอยู่** — สิ่งที่ถูกล้างคือแค่ของดิบที่มันอ่านแล้วสรุปไปแล้ว
+ใน history จะเหลือข้อความ `[ผลลัพธ์ tool ถูกล้างออกจาก history แล้ว (เดิม 14417 ตัวอักษร) — ถ้าต้องใช้ให้เรียก tool ใหม่]`
+แทนที่เนื้อหาไฟล์ (เปิดไฟล์ checkpoint ดูได้)
+
+กติกาในโค้ด: ล้างเฉพาะ tool result ที่ **(ก)** ยาวเกิน `CLEAR_TOOL_RESULT_OVER_CHARS = 500` ตัวอักษร และ
+**(ข)** อยู่ใน turn ที่จบไปแล้ว (ของ turn ปัจจุบันไม่แตะ เพราะ AI อาจยังต้องใช้) — ทำทุกครั้งที่จบ turn
+**ก่อน** `maybe_compact()` เพราะฟรี (ไม่เรียก LLM) ถ้ายังยาวเกินค่อยถึงคิว compaction
+
+**`read_file` มีขอบเขต:** อ่านได้เฉพาะไฟล์ในโฟลเดอร์ repo และห้ามไฟล์/โฟลเดอร์ที่ขึ้นต้นด้วยจุด (`.env`
+ที่เก็บ API key อยู่ในโฟลเดอร์เดียวกันพอดี) — ลองขอให้อ่าน `../อะไรก็ได้` หรือ `.gitignore` จะได้
+`error: …` กลับมาแทน นี่คือ Layer 8 (Safety) แบบง่ายที่สุด: tool ที่อ่านไฟล์ได้ต้องรู้ว่าอ่านอะไร**ไม่ได้**
+
 ---
 
 ## วิธีรัน
@@ -98,11 +147,14 @@ python labs/lab5_memory_checkpoint/agent_loop.py "<คำถาม>" [thread_id]
 `"default"` — checkpoint เก็บเป็นไฟล์ที่ `labs/lab5_memory_checkpoint/checkpoints/<thread_id>.json`
 (ไม่ถูกอัปโหลดขึ้น GitHub เพราะเป็นข้อมูลตอนรัน ไม่ใช่โค้ด)
 
+ทุกครั้งที่ AI ถูกเรียกจะมีบรรทัด `[token] prompt=… completion=…` (ความหมายเดียวกับใน Lab 2) — `prompt` คือ
+ขนาดของ history ทั้งหมดที่ส่งไป ใช้ดูว่า clearing/compaction ช่วยลดจริงแค่ไหน
+
 ดูแบบฝึกหัดเพิ่มเติมที่ [QUESTIONS.md](QUESTIONS.md)
 
 ---
 
 > **สำหรับผู้สอน/ผู้ตรวจ — ที่มาของโค้ด:** ดัดแปลงจาก `labs/lab7_memory/agent_memory.py` ของ repo ต้นทาง
-> - **คงไว้เหมือนเดิม:** class `ConversationMemory` (`history` / `context()` / `maybe_compact()`) — logic การจำและการสรุปไม่แก้เลย
-> - **ปรับ:** สลับ MCP tools (`ToolRegistry`) เป็น local tools ของ Lab 3 และแก้ถ้อยคำ `SYSTEM` — เพราะ repo นี้ไม่มี MCP server · **ตัด `notes`/`add_note()` ออก** — ต้นฉบับมี fact list ที่ฝังใน system prompt แบบ hardcode ตัวเดียว agent ไม่ได้จดเอง จึงไม่มีอะไรให้ผู้เรียนสังเกตใน lab นี้
-> - **เพิ่มใหม่:** checkpoint (บันทึก/โหลด JSON ต่อ `thread_id`) และ entry point แบบรับคำถามจาก CLI ทีละครั้ง
+> - **คงไว้เหมือนเดิม:** โครง `ConversationMemory` (`history` / `context()`) และวิธีสรุปใน `maybe_compact()` (prompt สรุป, `max_tokens=300`, เกณฑ์ 12 ข้อความ)
+> - **ปรับ:** สลับ MCP tools (`ToolRegistry`) เป็น local tools ของ Lab 3 และแก้ถ้อยคำ `SYSTEM` — เพราะ repo นี้ไม่มี MCP server · **ตัด `notes`/`add_note()` ออก** — ต้นฉบับมี fact list ที่ฝังใน system prompt แบบ hardcode ตัวเดียว agent ไม่ได้จดเอง จึงไม่มีอะไรให้ผู้เรียนสังเกต · **`maybe_compact()` ตัดที่ต้น turn แทน "4 ข้อความล่าสุด" ตายตัว** — ของเดิมตัดกลางคู่ `tool_calls`/`tool` ได้ถ้า turn ล่าสุดไม่ใช้ tool (API จะปฏิเสธ)
+> - **เพิ่มใหม่:** `clear_old_tool_results()` (tool-result clearing) · tool `read_file` (จำกัดในโฟลเดอร์ repo, ห้าม dotfile) · บรรทัด `[token]` · checkpoint (บันทึก/โหลด JSON ต่อ `thread_id`) และ entry point แบบรับคำถามจาก CLI ทีละครั้ง
