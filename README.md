@@ -10,7 +10,7 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 | Lab | โฟลเดอร์ | สรุป |
 | --- | --- | --- |
 | 1 | [labs/lab1_setup](labs/lab1_setup) | ตรวจสภาพแวดล้อม — ดัดแปลงจาก Lab 1 ของ repo ต้นทาง โดยตัดส่วนตรวจ MCP MSSQL Server ออก (ไม่มี server ให้ต่อใน repo นี้) เหลือแค่ตรวจ OpenRouter (LLM) — ไฟล์นี้**ไม่ byte-identical** กับต้นฉบับ (ต่างจาก Lab 3 ที่ต้องคงไว้เพราะสไลด์อ้างอิงเลขบรรทัด) |
-| 2 | [labs/lab2_llm](labs/lab2_llm) | เรียก LLM ครั้งแรก + เทียบหลายโมเดลบน OpenRouter — สำเนา byte-ต่อ-byte จาก Lab 2 ของ repo ต้นทาง |
+| 2 | [labs/lab2_llm](labs/lab2_llm) | เรียก LLM ครั้งแรก + เทียบหลายโมเดลบน OpenRouter — ดัดแปลงจาก Lab 2 ของ repo ต้นทาง โดยเพิ่มการแสดง**ค่าใช้จ่ายจริงเป็นเงิน** (`usage.cost` ที่ OpenRouter หักจริง) ของทุกครั้งที่เรียก |
 | 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก Lab 3 ของ repo ต้นทาง |
 | 3a | [labs/lab3a_self_correction](labs/lab3a_self_correction) | เติม self-correction ให้ Agent Loop ด้วยการแก้ `SYSTEM` prompt เพียงจุดเดียว (ไม่ใช้ hook) — ต่อยอดจาก Lab 3 โดยไม่แก้ไฟล์ Lab 3 เลย พร้อมโชว์ข้อจำกัดที่ prompt-only แก้ไม่ได้ ซึ่งเป็นเหตุผลที่ต้องมี Lab 4 |
 | 4 | [labs/lab4_hooks_middleware](labs/lab4_hooks_middleware) | ต่อยอด Lab 3 ด้วย Hooks/Middleware engine — รีเสิร์ชและออกแบบจากเอกสารจริงของ Anthropic ([Claude Code Hooks](https://code.claude.com/docs/en/hooks)) และ OpenAI ([Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/)) |
@@ -62,7 +62,8 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 
 ทุกครั้งที่รัน = เรียก AI จริงผ่าน **OpenRouter** ซึ่ง**คิดเงินตามการใช้จริง** (ไม่ใช่เหมาจ่ายรายเดือนแบบ
 ChatGPT Plus) — ต้องสมัครและเติมเงินก่อน ส่วนใหญ่ครั้งละไม่กี่สตางค์ถึงไม่กี่บาท ยกเว้น
-`compare_models.py` (Lab 2) ที่เรียก 3 โมเดลในครั้งเดียว และ Lab 5 ที่รันวนหลายรอบ
+`compare_models.py` (Lab 2) ที่เรียก 3 โมเดลในครั้งเดียว และ Lab 5 ที่รันวนหลายรอบ —
+**Lab 2 แสดงบรรทัด `[cost]` เงินที่ถูกหักจริงของทุกครั้งที่เรียก** ทำ Lab 2 ให้จบก่อนจะได้รู้ว่าแต่ละครั้งเสียเท่าไร
 
 ## วิธีรัน (รันจาก root ของ repo เสมอ เพราะทุก Lab import ผ่าน `labs.core.*`)
 
@@ -87,8 +88,8 @@ python labs/lab5_memory_checkpoint/agent_loop.py "แนะนำตัวหน
 python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 ```
 
-> **⚠️ ข้อความตกค้างจาก repo ต้นทางที่จะเจอใน README ของ Lab 2 และ Lab 3** (สองไฟล์นี้เป็นสำเนา
-> byte-identical จึงแก้ไม่ได้):
+> **⚠️ ข้อความตกค้างจาก repo ต้นทางที่จะเจอใน README ของ Lab 3** (ไฟล์นี้เป็นสำเนา byte-identical
+> จึงแก้ไม่ได้ เพราะสไลด์ของหลักสูตรอ้างอิงเลขบรรทัดไว้):
 > - เห็น `conda activate agentic-ai` → ให้ใช้ `source .venv/bin/activate` แทน (Windows: `.venv\Scripts\activate`)
 > - เห็น `cd Python-Agent-LangGraph` → ให้ใช้ `cd student-2026-AI-Harness-Engineering` แทน
 > - เห็นการอ้างถึง **Lab 7-9**, **LangGraph**, หรือโฟลเดอร์ `screenshots/` → ของเหล่านั้นอยู่ใน repo
@@ -150,8 +151,8 @@ python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แ
 
 สัญลักษณ์: ● = เป็นแกนหลักของ Lab นั้น · ◐ = แตะ/มีบางส่วน · (ว่าง) = ไม่มี — ตารางนี้เป็นของ repo นี้
 เอง (Lab 1/2/3/3a/4/5/6) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 7-9 · คอลัมน์
-L2 คงค่าตามที่ root README ของ repo ต้นทางให้ไว้ (ไฟล์เหมือนกันเป๊ะ ไม่ได้ประเมินใหม่) ส่วน L1
-ประเมินใหม่จากไฟล์ที่ตัด `check_mcp()` ออกแล้ว (ไม่ byte-identical กับต้นฉบับอีกต่อไป)
+L1/L2 ประเมินใหม่จากไฟล์ที่ดัดแปลงแล้ว (L1 ตัด `check_mcp()` ออก, L2 เพิ่มการแสดงค่าใช้จ่าย — ทั้งคู่
+ไม่ byte-identical กับต้นฉบับอีกต่อไป แต่การเพิ่ม/ตัดนั้นไม่กระทบว่า Lab แตะ layer ไหน ค่าจึงเท่าต้นฉบับ)
 
 | Layer | Lab 1 | Lab 2 | Lab 3 | Lab 3a | Lab 4 | Lab 5 | Lab 6 |
 | --- | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
