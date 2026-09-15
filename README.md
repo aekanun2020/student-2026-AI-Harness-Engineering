@@ -14,7 +14,7 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 | 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก Lab 3 ของ repo ต้นทาง |
 | 3a | [labs/lab3a_self_correction](labs/lab3a_self_correction) | เติม self-correction ให้ Agent Loop ด้วยการแก้ `SYSTEM` prompt เพียงจุดเดียว (ไม่ใช้ hook) — ต่อยอดจาก Lab 3 โดยไม่แก้ไฟล์ Lab 3 เลย พร้อมโชว์ข้อจำกัดที่ prompt-only แก้ไม่ได้ ซึ่งเป็นเหตุผลที่ต้องมี Lab 4 |
 | 4 | [labs/lab4_hooks_middleware](labs/lab4_hooks_middleware) | ต่อยอด Lab 3 ด้วย Hooks/Middleware engine — รีเสิร์ชและออกแบบจากเอกสารจริงของ Anthropic ([Claude Code Hooks](https://code.claude.com/docs/en/hooks)) และ OpenAI ([Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/)) |
-| 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction + Notes ดัดแปลงจาก `lab7_memory/agent_memory.py` ของ repo ต้นทาง) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
+| 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction ดัดแปลงจาก `lab7_memory/agent_memory.py` ของ repo ต้นทาง) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
 | 6 | [labs/lab6_sandbox](labs/lab6_sandbox) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + `RLIMIT_CPU`) — ทดสอบจริงด้วยการบังคับ resource exhaustion (`9999**99999999`) แล้วยืนยันว่า agent loop หลักไม่กระทบ พร้อมบันทึกบั๊กจริงเรื่อง `RLIMIT_AS` ใช้ไม่ได้บน macOS |
 
 ## สำหรับผู้เรียนที่เคยใช้แค่หน้าแชท (ChatGPT / Claude) — อ่านตรงนี้ก่อน

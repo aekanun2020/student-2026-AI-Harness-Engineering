@@ -1,7 +1,7 @@
-# Lab 5 — Memory (Compaction + Notes) + Checkpoint
+# Lab 5 — Memory (Compaction) + Checkpoint
 
 > ต่อยอดจาก **[Lab 3 — Agent Loop](../lab3_agent_loop/README.md)** — ส่วนความจำ (`ConversationMemory`:
-> compaction + notes) นำมาจากบทเรียนเรื่อง memory ของหลักสูตร แล้วเพิ่ม **checkpoint** เข้าไปเพื่อให้
+> history + compaction) นำมาจากบทเรียนเรื่อง memory ของหลักสูตร แล้วเพิ่ม **checkpoint** เข้าไปเพื่อให้
 > ความจำนั้นอยู่รอดแม้ปิดโปรแกรมแล้วเปิดใหม่ (ทุกอย่างที่ต้องใช้อยู่ในโฟลเดอร์นี้แล้ว)
 >
 > Sandbox แยกออกไปอยู่ **[Lab 6](../lab6_sandbox/README.md)** เพราะเป็นคนละ Layer (6 vs 2)
@@ -12,7 +12,6 @@
 
 - เข้าใจ **Compaction** — เมื่อบทสนทนายาวเกินเกณฑ์ ให้ LLM สรุปของเก่าเป็นย่อหน้าเดียวเพื่อรักษา
   token budget โดยไม่ทิ้งข้อมูลสำคัญ
-- เข้าใจ **Notes** — fact ที่ต้องจำไว้เสมอ ไม่ถูกกระทบแม้ compaction จะย่อ history ทิ้งไปแล้ว
 - เข้าใจความต่างระหว่าง **"memory ที่อยู่ใน RAM"** (หายเมื่อ process ตาย) กับ **"external memory
   ที่รอดข้าม context reset จริง"** (ต้อง persist ลงดิสก์/DB)
 - เห็น **checkpoint** — การบันทึกสถานะลงไฟล์เป็นระยะ เพื่อให้ปิดโปรแกรมแล้วเปิดใหม่ก็คุยต่อได้ และถ้า
@@ -34,7 +33,7 @@ Lab นี้สร้างสิ่งนั้นเองให้เห็�
 [answer] ผลลัพธ์ของ 42 × 2 = 84 ครับ ... จะจำไว้เลยว่าคุณชื่นชอบเลข 42
 
 === รันครั้งที่ 2 (process ใหม่อีกรอบ — คนละ process กับรอบแรกเป๊ะๆ) ===
-[resume] โหลด memory ของ thread 'mem-test' -> history 4 ข้อความ, notes 1 รายการ
+[resume] โหลด memory ของ thread 'mem-test' -> history 4 ข้อความ
 [user] เมื่อกี้ผมบอกว่าผมชอบเลขอะไร แล้วผลคูณที่ขอให้คำนวณคือเท่าไร
 [answer] จากการสนทนาก่อนหน้า คุณบอกว่าชอบเลข 42 มากที่สุดครับ และผลคูณ ... คือ 42 × 2 = 84
 ```
@@ -53,7 +52,7 @@ process ที่ 2 **ไม่มี state ใดๆ หลงเหลือ�
 [compaction] ย่อ 10 ข้อความเป็นสรุป 1 ก้อน (เหลือ 5 ข้อความ)
 
 === turn 3 (process ใหม่) ===
-[resume] โหลด memory ของ thread 'mem-test' -> history 5 ข้อความ, notes 1 รายการ
+[resume] โหลด memory ของ thread 'mem-test' -> history 5 ข้อความ
 ```
 
 `maybe_compact()` trigger ที่ `COMPACT_AFTER_MESSAGES = 12` พอดี แล้ว**สถานะหลัง compact ก็ถูก checkpoint ต่อทันที** (turn ถัดไปโหลดมาเห็น 5 ข้อความ
@@ -76,7 +75,7 @@ checkpoint บนดิสก์: `pending: True, history len: 3` — รัน�
 เพราะ resume ไม่ต้องการคำถามใหม่):
 
 ```
-[resume] โหลด memory ของ thread 'crash-mem' -> history 3 ข้อความ, notes 1 รายการ
+[resume] โหลด memory ของ thread 'crash-mem' -> history 3 ข้อความ
 [resume] turn ก่อนหน้าค้างกลางทาง (ถูกขัดจังหวะ) -> วิ่งต่อโดยไม่เพิ่มคำถามใหม่
 [step 1] THINK -> ขอเรียก 1 tool
            TOOL_USE calculate({'expression': '19*100'}) -> 1900
@@ -104,6 +103,6 @@ python labs/lab5_memory_checkpoint/agent_loop.py "<คำถาม>" [thread_id]
 ---
 
 > **สำหรับผู้สอน/ผู้ตรวจ — ที่มาของโค้ด:** ดัดแปลงจาก `labs/lab7_memory/agent_memory.py` ของ repo ต้นทาง
-> - **คงไว้เหมือนเดิม:** class `ConversationMemory` ทั้งก้อน (`history` / `notes` / `context()` / `maybe_compact()`) — logic การจำและการสรุปไม่แก้เลย
-> - **ปรับ:** สลับ MCP tools (`ToolRegistry`) เป็น local tools ของ Lab 3 และแก้ถ้อยคำ `SYSTEM` — เพราะ repo นี้ไม่มี MCP server
+> - **คงไว้เหมือนเดิม:** class `ConversationMemory` (`history` / `context()` / `maybe_compact()`) — logic การจำและการสรุปไม่แก้เลย
+> - **ปรับ:** สลับ MCP tools (`ToolRegistry`) เป็น local tools ของ Lab 3 และแก้ถ้อยคำ `SYSTEM` — เพราะ repo นี้ไม่มี MCP server · **ตัด `notes`/`add_note()` ออก** — ต้นฉบับมี fact list ที่ฝังใน system prompt แบบ hardcode ตัวเดียว agent ไม่ได้จดเอง จึงไม่มีอะไรให้ผู้เรียนสังเกตใน lab นี้
 > - **เพิ่มใหม่:** checkpoint (บันทึก/โหลด JSON ต่อ `thread_id`) และ entry point แบบรับคำถามจาก CLI ทีละครั้ง

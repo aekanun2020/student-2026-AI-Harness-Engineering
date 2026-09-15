@@ -15,7 +15,8 @@ python labs/lab5_memory_checkpoint/agent_loop.py "แนะนำตัวหน
 คำสุดท้าย `my-thread` = **ชื่อบทสนทนาที่คุณตั้งเอง** — ใช้ชื่อเดิมซ้ำ = คุยต่อเรื่องเดิม, ใช้ชื่อใหม่ = เริ่ม
 บทสนทนาใหม่ (ไม่ใส่จะใช้ชื่อ `default`)
 
-รันครั้งแรกจะไม่มีความจำเก่าให้โหลด agent จะเห็นแค่ note เริ่มต้น (`ผู้ใช้ชื่อผู้เรียนในหลักสูตร...`)
+รันครั้งแรกจะไม่มีความจำเก่าให้โหลด (ไม่มีบรรทัด `[resume]`) AI จะตอบว่ายังไม่มีอะไรให้จำ — รันซ้ำด้วยชื่อเดิม
+จึงจะเห็น `[resume]`
 
 ---
 
@@ -94,10 +95,8 @@ python labs/lab5_memory_checkpoint/agent_loop.py "ต่อ" crash-test
 ## แบบฝึกหัดต่อยอด — 🟡/🔴 สำหรับคนที่เขียน Python ได้แล้ว (ข้ามได้)
 
 1. 🟡 ลองลด `COMPACT_AFTER_MESSAGES` ใน `agent_loop.py` ให้ต่ำมากๆ (เช่น 4) แล้วดูว่า compaction ถี่ขึ้น
-   แค่ไหน สังเกตว่า note (`mem.notes`) ไม่เคยถูก compact ทิ้งเลยไม่ว่าจะรันกี่รอบ (ต่างจาก `history`)
-2. 🔴 ลองเพิ่ม note ระหว่างการสนทนา (เช่น เพิ่มบรรทัด `mem.add_note(...)` ใน `main()` ตามเงื่อนไข
-   บางอย่าง) แล้วดูว่า note ใหม่โผล่ใน `context()` ของทุก turn ถัดไปจริงไหม แม้จะ compact ไปแล้ว
-3. 🔴 เทียบกับ [LangGraph checkpointer](https://docs.langchain.com/oss/python/langgraph/persistence)
+   แค่ไหน และเปิดไฟล์ checkpoint ดูว่าข้อความ `[สรุปบทสนทนาก่อนหน้า] …` ถูกเซฟลงไฟล์แทนของเก่าจริง
+2. 🔴 เทียบกับ [LangGraph checkpointer](https://docs.langchain.com/oss/python/langgraph/persistence)
    ที่มี backend หลายแบบ (`InMemorySaver`/`SqliteSaver`/`PostgresSaver`) — ลองเขียน backend อื่นให้
    `save_checkpoint`/`load_checkpoint` ของเรา (เช่น SQLite) แทนไฟล์ JSON เดี่ยวๆ
 

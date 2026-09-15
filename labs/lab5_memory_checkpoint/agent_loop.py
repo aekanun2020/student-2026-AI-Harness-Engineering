@@ -1,9 +1,10 @@
 """
-Lab 5 — Memory (Compaction + Notes) + Checkpoint สำหรับ Agent ที่รันยาวข้ามหลายรอบ
+Lab 5 — Memory (Compaction) + Checkpoint สำหรับ Agent ที่รันยาวข้ามหลายรอบ
 
-`ConversationMemory` (history/notes/context()/maybe_compact()) คัดลอกมาจาก
+`ConversationMemory` (history/context()/maybe_compact()) คัดลอกมาจาก
 labs/lab7_memory/agent_memory.py ของ https://github.com/aekanun2020/Python-Agent-LangGraph
-โดยคงไว้ใกล้เคียงต้นฉบับที่สุด — logic การจำ/การสรุปไม่เปลี่ยนแม้แต่บรรทัดเดียว
+โดยคงไว้ใกล้เคียงต้นฉบับที่สุด — logic การจำ/การสรุปไม่เปลี่ยน (ตัดเฉพาะส่วน notes ออก
+เพราะ lab นี้ไม่ได้ใช้: ต้นฉบับมี list ของ fact ที่ฝังไว้ใน system prompt ตายตัว agent ไม่ได้จดเอง)
 
 จุดที่ต้องปรับจากต้นฉบับ (เพราะรันแบบ standalone ในนี้ ไม่มี MCP MSSQL Server จริงให้ต่อ):
   - ต้นฉบับใช้ ToolRegistry ต่อ MCP server จริงผ่าน config.MCP_SERVER_URL (ไม่มีใน repo นี้)
@@ -11,7 +12,7 @@ labs/lab7_memory/agent_memory.py ของ https://github.com/aekanun2020/Python
   - SYSTEM ต้นฉบับเป็น DB-analyst persona ที่อ้างอิง MCP tools ของฐานข้อมูลตรงๆ
     -> ปรับให้เข้ากับ local tools แต่คงประโยค "จำบริบทการสนทนาก่อนหน้าได้" ซึ่งเป็นหัวใจของบทเรียนไว้
 
-ส่วนที่เพิ่มใหม่ (ไม่มีใน labs/lab7_memory/ ต้นฉบับ): CHECKPOINT — บันทึก mem.history/mem.notes
+ส่วนที่เพิ่มใหม่ (ไม่มีใน labs/lab7_memory/ ต้นฉบับ): CHECKPOINT — บันทึก mem.history
 ลงไฟล์ JSON คีย์ด้วย thread_id ทุกครั้งที่จบ step/turn เพื่อให้ "external memory" ของ Lab 7 เดิม
 (ซึ่งจริงๆ แล้วเป็นแค่ RAM ของ process เดียว หายหมดถ้า process ตาย) กลาย เป็น external จริง —
 รอดได้แม้ process ถูกฆ่ากลางทาง และรอดข้าม "context reset" ทุกครั้งที่ script รันจบไปแล้วเปิดใหม่
@@ -73,23 +74,16 @@ COMPACT_AFTER_MESSAGES = 12
 
 # ==== ConversationMemory — คัดลอกจาก labs/lab7_memory/agent_memory.py แทบทั้งหมด ====
 class ConversationMemory:
-    """หน่วยความจำการสนทนาแบบ in-memory + compaction + notes."""
+    """หน่วยความจำการสนทนาแบบ in-memory + compaction."""
     def __init__(self):
         self.history: list[dict] = []     # messages ข้ามรอบ
-        self.notes: list[str] = []         # fact สำคัญที่คงอยู่แม้ compaction
 
     def add(self, message: dict):
         self.history.append(message)
 
-    def add_note(self, fact: str):
-        self.notes.append(fact)
-
     def context(self) -> list[dict]:
-        """ประกอบ context: system + notes + history (ไว้ส่งเข้า LLM ทุกครั้ง)."""
-        sys_msg = {"role": "system", "content": SYSTEM}
-        if self.notes:
-            sys_msg["content"] += "\n\n[บันทึกที่ต้องจำ]\n- " + "\n- ".join(self.notes)
-        return [sys_msg] + self.history
+        """ประกอบ context: system + history (ไว้ส่งเข้า LLM ทุกครั้ง)."""
+        return [{"role": "system", "content": SYSTEM}] + self.history
 
     def maybe_compact(self):
         """ถ้า history ยาวเกินเกณฑ์ ให้ LLM สรุปของเก่าเป็นย่อหน้าเดียว (รักษา token budget)."""
@@ -121,7 +115,7 @@ def save_checkpoint(thread_id: str, mem: ConversationMemory, pending: bool) -> N
     """pending=True แปลว่า turn ยังทำไม่จบ (มี tool_calls ค้างอยู่) — ใช้บอกตอน resume ว่า
     ต้องวิ่งต่อจากตรงนี้เลยไหม หรือพร้อมรับคำถามใหม่ได้แล้ว"""
     with open(_checkpoint_path(thread_id), "w", encoding="utf-8") as f:
-        json.dump({"history": mem.history, "notes": mem.notes, "pending": pending},
+        json.dump({"history": mem.history, "pending": pending},
                    f, ensure_ascii=False, indent=2)
 
 
@@ -169,20 +163,15 @@ def main():
     question = sys.argv[1] if len(sys.argv) > 1 else "แนะนำตัวหน่อยว่าคุณจำอะไรได้บ้าง"
     thread_id = sys.argv[2] if len(sys.argv) > 2 else "default"
 
+    mem = ConversationMemory()
     checkpoint = load_checkpoint(thread_id)
     if checkpoint:
-        mem = ConversationMemory()
         mem.history = checkpoint["history"]
-        mem.notes = checkpoint["notes"]
-        print(f"[resume] โหลด memory ของ thread '{thread_id}' -> "
-              f"history {len(mem.history)} ข้อความ, notes {len(mem.notes)} รายการ")
+        print(f"[resume] โหลด memory ของ thread '{thread_id}' -> history {len(mem.history)} ข้อความ")
         if checkpoint.get("pending"):
             print("[resume] turn ก่อนหน้าค้างกลางทาง (ถูกขัดจังหวะ) -> วิ่งต่อโดยไม่เพิ่มคำถามใหม่")
             turn(None, mem, thread_id, resume=True)
             return
-    else:
-        mem = ConversationMemory()
-        mem.add_note("ผู้ใช้ชื่อผู้เรียนในหลักสูตร Agentic AI Development with Python")  # ตัวอย่าง note
 
     turn(question, mem, thread_id)
 
