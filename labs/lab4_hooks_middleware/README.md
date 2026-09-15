@@ -39,22 +39,60 @@
 
 ---
 
-## ออกแบบ: `labs/core/hooks.py`
+## `HookResult` คืออะไร
+
+เวลาเราเขียนฟังก์ชัน hook สักตัวขึ้นมา (เช่น "เช็คว่านิพจน์ที่จะคำนวณยาวเกินไปไหม") ฟังก์ชันนั้น
+ต้องมีวิธี "บอกผลการเช็ค" กลับไปให้ระบบรู้ว่า:
+
+- ควรปล่อยผ่านไปตามปกติไหม
+- ควรบล็อกไม่ให้ทำขั้นต่อไปไหม (ถ้าบล็อก เพราะอะไร)
+- ควรแก้ไขข้อมูลก่อนส่งต่อไหม (ถ้าแก้ แก้เป็นอะไร)
+
+`HookResult` คือรูปแบบผลลัพธ์ที่ตายตัว ให้ hook function **ทุกตัว** คืนกลับมาแบบเดียวกันหมด
+เพื่อให้ส่วนอื่นของระบบอ่านและเข้าใจตรงกัน — คล้ายการกรอกแบบฟอร์มมาตรฐาน คนอ่านไม่ต้องเดาว่า
+แต่ละคนจะเขียนคำตอบมาในรูปแบบไหน:
 
 ```python
 @dataclass
 class HookResult:
     decision: str = "allow"                 # allow | deny | modify
-    reason: str | None = None
-    data: dict | None = None
-    additional_context: str | None = None
+    reason: str | None = None               # เหตุผล (ใช้ตอน deny)
+    data: dict | None = None                # ข้อมูลที่แก้ไขแล้ว (ใช้ตอน modify)
+    additional_context: str | None = None   # ข้อความเสริมที่จะแทรกกลับเข้าไป
+```
 
+แต่ละ field มีหน้าที่ต่างกัน และมีคนเขียน/คนอ่านคนละฝั่ง:
+
+| Field | มีไว้ทำอะไร | ใครเขียนค่านี้ | ใครอ่านค่านี้ไปใช้ |
+| --- | --- | --- | --- |
+| `decision` | บอกว่า "ปล่อยผ่าน" (`allow`), "บล็อก" (`deny`), หรือ "แก้ไขแล้วปล่อยผ่าน" (`modify`) | hook function ที่เราเขียน | `HookManager` — ใช้ตัดสินใจว่าจะทำอะไรต่อ |
+| `reason` | ข้อความอธิบายเหตุผล ใช้ตอน `deny` | hook function | โค้ดที่เรียกใช้ — เอาไป log หรือแสดงข้อความปฏิเสธ |
+| `data` | ข้อมูลฉบับแก้ไขแล้ว ใช้ตอน `modify` | hook function | `HookManager` — เอาไปอัปเดตข้อมูลก่อนส่งต่อ |
+| `additional_context` | ข้อความเสริมที่อยากแทรกเข้าไปในบทสนทนา | hook function | โค้ดที่เรียกใช้ — เอาไปต่อท้ายข้อความ |
+
+พูดสั้นๆ: **`HookResult` ไม่มี logic การตัดสินใจอะไรอยู่ในตัวมันเองเลย มันแค่เป็นที่เก็บผลลัพธ์**
+ตัวที่เอาผลลัพธ์นี้ไปใช้ตัดสินใจ/ทำงานต่อจริงๆ คือ `HookManager` (อธิบายต่อด้านล่าง)
+
+---
+
+## `HookManager` คืออะไร
+
+ถ้า `HookResult` คือที่เก็บผลลัพธ์จาก hook function 1 ตัว `HookManager` คือ**ตัวที่รวบรวม hook
+function หลายตัวไว้ด้วยกัน แล้วเรียกให้ทำงานตามลำดับ**:
+
+```python
 class HookManager:
     def register(self, event, fn, matcher=None): ...
     def run(self, event, payload, tool_name=None) -> HookResult: ...
 ```
 
-5 event ที่รองรับ map ตรงกับจังหวะจริงของ `run_agent()` ใน Lab 3:
+- **`register(event, fn, matcher)`** — ลงทะเบียนว่า function ตัวนี้ (`fn`) ให้ทำงานตอน event ไหน
+  (เช่น `"pre_tool"`) ถ้าใส่ `matcher` ไว้ด้วย จะทำงานเฉพาะตอนชื่อ tool ตรงกับที่ระบุเท่านั้น
+- **`run(event, payload, tool_name)`** — เรียก hook function ทุกตัวที่ลงทะเบียนไว้กับ event นั้น
+  **ตามลำดับที่ลงทะเบียน** แล้วอ่านค่า `.decision` ใน `HookResult` ที่แต่ละตัวคืนมา เพื่อตัดสินใจ
+  ว่าจะทำอะไรต่อ
+
+5 event ที่ `HookManager` รองรับ map ตรงกับจังหวะจริงของ `run_agent()` ใน Lab 3:
 
 ```
 pre_llm -> [LLM] -> post_llm -> (tool_calls?)
@@ -69,8 +107,13 @@ pre_llm -> [LLM] -> post_llm -> (tool_calls?)
 | `post_tool` | หลังได้ผล tool ก่อนป้อนกลับ LLM | `PostToolUse` (Claude Code) |
 | `stop` | ก่อนจบ turn (`END_TURN`) | `Stop` hook (Claude Code) / output guardrail (OpenAI) |
 
-`HookManager.run()` เจอ `"deny"` ตัวแรกจะ short-circuit ทันที (เหมือน exit code 2 ของ Claude Code /
-exception ของ OpenAI) ส่วน `"modify"` จะ merge `data` เข้า payload แล้วส่งต่อให้ hook ถัดไปเห็นค่าใหม่
+**พฤติกรรมของ `run()` ตอนเจอแต่ละ `decision`:**
+- เจอ `HookResult` ที่ `decision == "deny"` ตัวแรก → **หยุดทันที** คืน `HookResult` ตัวนั้นกลับไป
+  เลยทั้งก้อน ไม่เรียก hook ที่เหลือต่อ (เหมือน exit code 2 ของ Claude Code หรือ exception ของ
+  OpenAI Guardrails)
+- ถ้าไม่มีตัวไหน `deny` เลย → เอา `.data` จากทุก `HookResult` ที่เป็น `modify` มารวมกัน แล้ว
+  **สร้าง `HookResult` ใหม่**ที่มี `decision == "allow"` ส่งกลับไป — สังเกตว่า `"modify"` ที่ hook
+  function คืนมา จะไม่ใช่ค่าสุดท้ายที่ผู้เรียกเห็น มันถูกแปลงเป็น `"allow"` เสมอตอนจบ
 
 ---
 
@@ -109,17 +152,22 @@ def build_default_hooks() -> HookManager:
 ```
 
 จากนั้น `run_agent()` เป็นตัวเรียก `hooks.run(event, payload, ...)` จริงที่ 5 จุดในวง loop — ตรงนั้นแหละที่
-function ที่ `register()` ไว้ถูกเรียกทำงานจริง ลอง trace เคส "นิพจน์ยาวเกิน 40 ตัวอักษร" ดู:
+function ที่ `register()` ไว้ถูกเรียกทำงานจริง แล้ว `HookResult` ที่แต่ละ function คืนมาก็เดินทางกลับไป
+ให้ `run_agent()` อ่านต่อ ลอง trace เคส "นิพจน์ยาวเกิน 40 ตัวอักษร" ดูทีละขั้น:
 
 1. `run_agent()` เจอ tool call `calculate` → เรียก `hooks.run("pre_tool", {...}, tool_name="calculate")`
-2. `HookManager` ไล่ hook ที่ register กับ `pre_tool` ตามลำดับ: `audit_log_hook` (log แล้ว allow) ตามด้วย
-   `guard_calculate_hook` (matcher ตรงกับ `"calculate"` เช็คความยาว → คืน `deny`)
-3. เจอ `deny` → `HookManager` short-circuit ทันที ไม่เรียก hook ที่เหลือ
-4. `run_agent()` เห็น `decision == "deny"` → **ไม่เรียก `dispatch()` เลย** (`calculate()` จริงจาก Lab 3
-   ไม่ถูกรัน) แค่พิมพ์ข้อความปฏิเสธแทน
+2. `HookManager` ไล่ hook ที่ register กับ `pre_tool` ตามลำดับ:
+   - `audit_log_hook` ทำงาน → เขียน log → คืน `HookResult(decision="allow")`
+   - `guard_calculate_hook` ทำงาน (matcher ตรงกับ `"calculate"`) → เช็คความยาว → คืน
+     `HookResult(decision="deny", reason="นิพจน์ยาวเกินไป...")`
+3. `HookManager` เจอ `decision == "deny"` → หยุดทันที ส่ง `HookResult` ตัวนี้ (ตัวเดิมจาก
+   `guard_calculate_hook` เป๊ะๆ ไม่ได้สร้างใหม่) กลับไปให้ `run_agent()`
+4. `run_agent()` รับ `HookResult` มา อ่าน `.decision` เจอว่าเป็น `"deny"` → **ไม่เรียก `dispatch()`
+   เลย** (`calculate()` จริงจาก Lab 3 ไม่ถูกรัน) แล้วอ่าน `.reason` ไปพิมพ์เป็นข้อความปฏิเสธแทน
 
-เส้นทางเต็ม: **ออกแบบ (engine เปล่า) → Hook ตัวอย่าง (ชิ้นส่วน) → `build_default_hooks()` (เสียบเข้าเครื่อง)
-→ `run_agent()` (กดปุ่มให้ทำงานจริง)**
+เส้นทางเต็ม: **`HookResult` (รูปแบบผลลัพธ์) → `HookManager` (ตัวรวบรวม+ตัดสินใจ) → Hook ตัวอย่าง
+(ฟังก์ชันที่คืน `HookResult`) → `build_default_hooks()` (จุดเสียบทุกอย่างเข้าด้วยกัน) →
+`run_agent()` (จุดที่ทุกอย่างถูกเรียกใช้งานจริง)**
 
 ---
 
