@@ -18,5 +18,5 @@ venv/
 *.log
 .DS_Store
 
-# ---- Lab 5: checkpoint files (runtime state, ไม่ใช่ source) ----
-labs/lab5_sandbox_checkpoint/checkpoints/
+# ---- checkpoint files (runtime state, ไม่ใช่ source) ----
+labs/lab5_memory_checkpoint/checkpoints/
