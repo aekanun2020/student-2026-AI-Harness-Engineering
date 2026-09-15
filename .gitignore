@@ -17,3 +17,6 @@ venv/
 # ---- Logs / ชั่วคราว ----
 *.log
 .DS_Store
+
+# ---- Lab 5: checkpoint files (runtime state, ไม่ใช่ source) ----
+labs/lab5_sandbox_checkpoint/checkpoints/

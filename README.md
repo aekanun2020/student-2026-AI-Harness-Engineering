@@ -12,6 +12,7 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 | 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab3_agent_loop) |
 | 3a | [labs/lab3a_self_correction](labs/lab3a_self_correction) | เติม self-correction ให้ Agent Loop ด้วยการแก้ `SYSTEM` prompt เพียงจุดเดียว (ไม่ใช้ hook) — ต่อยอดจาก Lab 3 โดยไม่แก้ไฟล์ Lab 3 เลย พร้อมโชว์ข้อจำกัดที่ prompt-only แก้ไม่ได้ ซึ่งเป็นเหตุผลที่ต้องมี Lab 4 |
 | 4 | [labs/lab4_hooks_middleware](labs/lab4_hooks_middleware) | ต่อยอด Lab 3 ด้วย Hooks/Middleware engine — รีเสิร์ชและออกแบบจากเอกสารจริงของ Anthropic ([Claude Code Hooks](https://code.claude.com/docs/en/hooks)) และ OpenAI ([Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/)) |
+| 5 | [labs/lab5_sandbox_checkpoint](labs/lab5_sandbox_checkpoint) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + resource limit) และ Checkpoint (บันทึก state ต่อ `thread_id` ให้ resume ได้หลัง crash) — ทดสอบจริงด้วยการ `SIGKILL` process กลางทางแล้วยืนยันว่า resume ต่อได้ |
 
 ## วิธีรัน (รันจาก root ของ repo เสมอ เพราะทุก Lab import ผ่าน `labs.core.*`)
 
@@ -23,6 +24,7 @@ python labs/lab3_agent_loop/agent_loop.py "ตอนนี้กี่โมง 
 python labs/lab3a_self_correction/agent_loop.py "กรุณาคำนวณนิพจน์นี้เป๊ะๆ ตามที่เขียน อย่าปรับรูปแบบ: 5,000+3,000"
 python labs/lab4_hooks_middleware/agent_loop_hooks.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 python labs/lab4_hooks_middleware/test_hooks.py   # เทสโดยไม่ต้องมี API key จริง
+python labs/lab5_sandbox_checkpoint/agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร" my-thread
 ```
 
 เข้าไปอ่าน README ของแต่ละ Lab เพื่อดูรายละเอียดเพิ่มเติม
@@ -73,22 +75,24 @@ python labs/lab4_hooks_middleware/test_hooks.py   # เทสโดยไม่�
 ### แต่ละ Lab ใน repo นี้อยู่ตรงไหนของ 8 Layer นี้
 
 สัญลักษณ์: ● = เป็นแกนหลักของ Lab นั้น · ◐ = แตะ/มีบางส่วน · (ว่าง) = ไม่มี — ตารางนี้เป็นของ repo นี้
-เอง (Lab 3/3a/4) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 1-2, 5-9
+เอง (Lab 3/3a/4/5) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 1-2, 6-9
 
-| Layer | Lab 3 | Lab 3a | Lab 4 |
-| --- | :--: | :--: | :--: |
-| 1. Instructions / Bootstrap | | ◐ | ◐ |
-| 2. Memory | | | |
-| 3. Tools + Skills | ◐ | ◐ | ◐ |
-| 4. Hooks | | | ● |
-| 5. Reasoning Loop (Agent Loop) | ● | ● | ● |
-| 6. Sandbox + Execution | ◐* | ◐* | ◐* |
-| 7. Gateway + Scheduler | | | |
-| 8. Safety Layer | ◐* | ◐* | ◐ |
+| Layer | Lab 3 | Lab 3a | Lab 4 | Lab 5 |
+| --- | :--: | :--: | :--: | :--: |
+| 1. Instructions / Bootstrap | | ◐ | ◐ | |
+| 2. Memory | | | | ● |
+| 3. Tools + Skills | ◐ | ◐ | ◐ | ◐ |
+| 4. Hooks | | | ● | |
+| 5. Reasoning Loop (Agent Loop) | ● | ● | ● | ● |
+| 6. Sandbox + Execution | ◐* | ◐* | ◐* | ● |
+| 7. Gateway + Scheduler | | | | |
+| 8. Safety Layer | ◐* | ◐* | ◐ | ◐ |
 
 > `◐*` = มีร่องรอย/พฤติกรรมคล้าย แต่ยังไม่ใช่ระบบจริงตามนิยาม layer (เช่น `calculate()`'s whitelist
 > eval เป็นการป้องกันแบบพื้นฐาน ไม่ใช่ sandbox จริงแบบ Docker/VM) · Lab 3a แตะ Layer 1 เพิ่มจาก Lab 3
-> เพราะแก้ `SYSTEM` prompt (Instructions) เพื่อสั่ง self-correction
+> เพราะแก้ `SYSTEM` prompt (Instructions) เพื่อสั่ง self-correction · Lab 5 เป็น `●` (ไม่ใช่ `◐*`) ใน
+> Layer 6 เพราะเป็น sandbox จริง (subprocess + resource limit แยก process จริง ไม่ใช่แค่ whitelist
+> ตัวอักษร) ทดสอบแล้วด้วยการบังคับ resource exhaustion จริง — ดู [Lab 5](labs/lab5_sandbox_checkpoint/README.md)
 >
-> **ช่องว่างที่ยังไม่มี Lab ไหนครอบคลุมเลย:** Layer 2 (Memory/checkpoint), Layer 6 (Sandbox จริง),
-> Layer 7 (Gateway/Scheduler) — Layer 2+6 นี้เองที่กำลังพิจารณาแยกเป็น Lab ใหม่ (ดูหัวข้อถัดไป)
+> **ช่องว่างที่ยังไม่มี Lab ไหนครอบคลุมเลย:** Layer 1 (เป็น core ล้วน, ยังไม่มี Lab ไหนทำเป็นแกนหลัก),
+> Layer 7 (Gateway/Scheduler), Layer 8 (Safety Layer เต็มรูปแบบ — มีแค่ audit trail บางส่วนจาก Lab 4)
