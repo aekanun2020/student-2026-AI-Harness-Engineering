@@ -83,7 +83,7 @@ python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แ
 | --- | :--: | :--: | :--: | :--: | :--: |
 | 1. Instructions / Bootstrap | | ◐ | ◐ | | |
 | 2. Memory | | | | ● | |
-| 3. Tools + Skills | ◐ | ◐ | ◐ | ◐ | ◐ |
+| 3. Tools + Skills | ● | ● | ● | ● | ● |
 | 4. Hooks | | | ● | | |
 | 5. Reasoning Loop (Agent Loop) | ● | ● | ● | ● | ● |
 | 6. Sandbox + Execution | ◐* | ◐* | ◐* | | ● |
@@ -93,6 +93,10 @@ python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แ
 > `◐*` = มีร่องรอย/พฤติกรรมคล้าย แต่ยังไม่ใช่ระบบจริงตามนิยาม layer (เช่น `calculate()`'s whitelist
 > eval เป็นการป้องกันแบบพื้นฐาน ไม่ใช่ sandbox จริงแบบ Docker/VM) · Lab 3a แตะ Layer 1 เพิ่มจาก Lab 3
 > เพราะแก้ `SYSTEM` prompt (Instructions) เพื่อสั่ง self-correction
+>
+> **Layer 3 (Tools):** "Tools" ในตารางนี้หมายถึง function ใดๆ ที่ LLM เรียกใช้ได้จริง ไม่ว่าจะผ่าน
+> MCP หรือเป็น local function ก็นับ — ทุก Lab มี `get_time`/`calculate` เป็น function-calling tool
+> ที่โมเดลเรียกได้จริงจึงเป็น `●` เต็ม (ไม่รวมส่วน "Skills" ซึ่งยังไม่มี Lab ไหนทำ)
 >
 > **Lab 5** เป็น `●` จริงใน Layer 2 (checkpoint ทำให้ memory รอดข้าม process จริง ต่างจาก
 > `lab7_memory` ต้นฉบับที่เป็นแค่ RAM) — ดู [Lab 5](labs/lab5_memory_checkpoint/README.md)
