@@ -1,28 +1,85 @@
 # student-2026-AI-Harness-Engineering
 
-Repo เก็บงาน/แบบฝึกหัดของหลักสูตร **Agentic AI Development with Python** ต่อยอดจาก
-[Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph) — โครงสร้าง
-โฟลเดอร์ `labs/` และชื่อไฟล์ **เหมือนกับ repo ต้นทางเป๊ะ** (`labs/core/`, `labs/lab3_agent_loop/`
-ฯลฯ) เพื่อให้เอกสาร/สไลด์ที่อ้างอิง path และเลขบรรทัดของโค้ดยังใช้ได้ต่อเนื่อง
+Repo เก็บงาน/แบบฝึกหัดของหลักสูตร **Agentic AI Development with Python** ต่อยอดจาก repo ต้นทางของ
+หลักสูตร (Python-Agent-LangGraph) — โครงสร้างโฟลเดอร์ `labs/` และชื่อไฟล์ **เหมือนกับ repo ต้นทางเป๊ะ**
+(`labs/core/`, `labs/lab3_agent_loop/` ฯลฯ) เพื่อให้เอกสาร/สไลด์ที่อ้างอิง path และเลขบรรทัดของโค้ดยังใช้ได้
+ต่อเนื่อง — **ผู้เรียนทำทุกอย่างใน repo นี้ที่เดียว ไม่ต้องเปิด repo ต้นทาง** (ลิงก์สำหรับผู้ตรวจอยู่ท้ายหน้า)
 
 ## รายการงาน
 
 | Lab | โฟลเดอร์ | สรุป |
 | --- | --- | --- |
-| 1 | [labs/lab1_setup](labs/lab1_setup) | ตรวจสภาพแวดล้อม — ดัดแปลงจาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab1_setup) โดยตัดส่วนตรวจ MCP MSSQL Server ออก (ไม่มี server ให้ต่อใน repo นี้) เหลือแค่ตรวจ OpenRouter (LLM) — ไฟล์นี้**ไม่ byte-identical** กับต้นฉบับ (ต่างจาก Lab 3 ที่ต้องคงไว้เพราะสไลด์อ้างอิงเลขบรรทัด) |
-| 2 | [labs/lab2_llm](labs/lab2_llm) | เรียก LLM ครั้งแรก + เทียบหลายโมเดลบน OpenRouter — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab2_llm) |
-| 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph/tree/main/labs/lab3_agent_loop) |
+| 1 | [labs/lab1_setup](labs/lab1_setup) | ตรวจสภาพแวดล้อม — ดัดแปลงจาก Lab 1 ของ repo ต้นทาง โดยตัดส่วนตรวจ MCP MSSQL Server ออก (ไม่มี server ให้ต่อใน repo นี้) เหลือแค่ตรวจ OpenRouter (LLM) — ไฟล์นี้**ไม่ byte-identical** กับต้นฉบับ (ต่างจาก Lab 3 ที่ต้องคงไว้เพราะสไลด์อ้างอิงเลขบรรทัด) |
+| 2 | [labs/lab2_llm](labs/lab2_llm) | เรียก LLM ครั้งแรก + เทียบหลายโมเดลบน OpenRouter — ดัดแปลงจาก Lab 2 ของ repo ต้นทาง โดยเพิ่มการแสดง**ค่าใช้จ่ายจริงเป็นเงิน** (`usage.cost` ที่ OpenRouter หักจริง) ของทุกครั้งที่เรียก |
+| 3 | [labs/lab3_agent_loop](labs/lab3_agent_loop) | Agent loop แรกแบบ Pure Python (THINK → TOOL_USE → OBSERVE → END_TURN) — สำเนา byte-ต่อ-byte จาก Lab 3 ของ repo ต้นทาง |
 | 3a | [labs/lab3a_self_correction](labs/lab3a_self_correction) | เติม self-correction ให้ Agent Loop ด้วยการแก้ `SYSTEM` prompt เพียงจุดเดียว (ไม่ใช้ hook) — ต่อยอดจาก Lab 3 โดยไม่แก้ไฟล์ Lab 3 เลย พร้อมโชว์ข้อจำกัดที่ prompt-only แก้ไม่ได้ ซึ่งเป็นเหตุผลที่ต้องมี Lab 4 |
 | 4 | [labs/lab4_hooks_middleware](labs/lab4_hooks_middleware) | ต่อยอด Lab 3 ด้วย Hooks/Middleware engine — รีเสิร์ชและออกแบบจากเอกสารจริงของ Anthropic ([Claude Code Hooks](https://code.claude.com/docs/en/hooks)) และ OpenAI ([Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/)) |
-| 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction + Notes ดัดแปลงจาก [lab7_memory/agent_memory.py](https://github.com/aekanun2020/Python-Agent-LangGraph/blob/main/labs/lab7_memory/agent_memory.py)) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
-| 6 | [labs/lab6_sandbox](labs/lab6_sandbox) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + `RLIMIT_CPU`) — ทดสอบจริงด้วยการบังคับ resource exhaustion (`9999**99999999`) แล้วยืนยันว่า agent loop หลักไม่กระทบ พร้อมบันทึกบั๊กจริงเรื่อง `RLIMIT_AS` ใช้ไม่ได้บน macOS |
+| 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction ดัดแปลงจาก `lab7_memory/agent_memory.py` ของ repo ต้นทาง + Tool-result clearing ที่เพิ่มใหม่ พร้อม tool `read_file` ที่คืนทั้งไฟล์ให้มีของก้อนใหญ่ให้ล้าง) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง clearing (prompt ~9,700 → ~1,300 token), compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
+| 6 | [labs/lab6_sandbox](labs/lab6_sandbox) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + `RLIMIT_CPU` + env ไม่มี API key + cwd ว่างชั่วคราว + `RLIMIT_FSIZE` ห้ามเขียนไฟล์) — ทดสอบจริงด้วยการบังคับ resource exhaustion (`9999**99999999`) แล้วยืนยันว่า agent loop หลักไม่กระทบ มี `probe_sandbox.py` ให้ดูว่าห้องกั้นอะไรได้/ไม่ได้ พร้อมบันทึกบั๊กจริงเรื่อง `RLIMIT_AS` ใช้ไม่ได้บน macOS |
+| 6b | [labs/lab6b_sandbox_container](labs/lab6b_sandbox_container) | Sandbox แบบเต็ม: tool (`calculate` / `read_file` / `run_python`) เป็น **MCP server รันใน Docker container** ที่ `--network none` + mount workspace แบบ read-only + user ไม่ใช่ root — agent loop บน host คุยผ่าน MCP stdio · ปิดสองช่องที่ Lab 6 ปิดไม่ได้ (อ่านไฟล์นอกห้อง, network) มี `probe_sandbox.py` เทียบผลกับ Lab 6 · ต้องมี Docker |
+
+## สำหรับผู้เรียนที่เคยใช้แค่หน้าแชท (ChatGPT / Claude) — อ่านตรงนี้ก่อน
+
+### terminal คืออะไร
+
+ทุก Lab รันจาก **terminal** (หน้าต่างพิมพ์คำสั่งเป็นข้อความ ไม่มีปุ่มให้กด):
+- **Mac:** กด ⌘ + Space พิมพ์ `Terminal` แล้ว Enter
+- **Windows:** กดปุ่ม Windows พิมพ์ `PowerShell` แล้ว Enter
+
+ตลอดหลักสูตรนี้ใช้คำสั่งหลักแค่ 3 ตัว: `cd` (เข้าโฟลเดอร์), `python3` (รันโปรแกรม — **Windows พิมพ์ `python`**
+แทน เพราะ `python3` บน Windows มักไม่มีหรือเด้งไปเปิด Microsoft Store), `pip` (ติดตั้งไลบรารี)
+ทุกคำสั่งพิมพ์แล้วกด Enter — ถ้าเห็นข้อความ error สีแดงยาวๆ ไม่ต้องตกใจ อ่านบรรทัดสุดท้ายก่อน มักบอกสาเหตุ
+
+### ศัพท์ที่จะเจอตั้งแต่บรรทัดแรก
+
+| คำ | ความหมายในหลักสูตรนี้ |
+| --- | --- |
+| **repo** | โฟลเดอร์โปรเจกต์ที่เก็บโค้ดทั้งหมด ฝากไว้บน GitHub — "root ของ repo" = โฟลเดอร์บนสุดที่มีไฟล์ README.md นี้อยู่ |
+| **system prompt** | ข้อความตั้งต้นที่บอกบุคลิก/กติกาให้ AI ก่อนเริ่มคุย — สิ่งเดียวกับ Custom Instructions ที่คุณเคยตั้งในหน้าแชท |
+| **tool** | ปุ่มที่ AI กดเองได้ เช่น เครื่องคิดเลข, นาฬิกา — เหมือนตอน ChatGPT ขึ้นว่า "กำลังค้นหาเว็บ…" นั่นคือมันกำลังใช้ tool |
+| **agent loop** | AI ทำงานหลายขั้นต่อเนื่องเอง (คิด → ใช้ tool → ดูผล → คิดต่อ) จนเสร็จ แทนที่จะตอบทีเดียวแล้วจบ |
+| **token** | ชิ้นส่วนของคำ (ภาษาไทย 1 คำอาจเป็นหลาย token) — ค่าใช้จ่ายและขีดจำกัดความยาวของ AI นับเป็น token ไม่ใช่ตัวอักษร |
+| **API key** | รหัสสำหรับให้โปรแกรมเรียกใช้ AI แทนเรา (เหมือน login ให้โค้ด) — **ห้ามแชร์ให้ใคร** |
+| **process** | โปรแกรมที่รันอยู่ 1 ครั้ง — ปิดแล้วเปิดใหม่ = process ใหม่ ความจำที่อยู่ใน RAM หายหมด |
+| **argument** | ค่าที่ส่งให้ tool หรือส่งต่อท้ายคำสั่ง (ไม่ใช่ "การเถียง") |
+| **deterministic** | ทำเหมือนเดิม 100% ทุกครั้ง ไม่ขึ้นกับการสุ่มของ AI |
+| **byte-identical** | ไฟล์เหมือนต้นฉบับทุกตัวอักษร — ใช้กับไฟล์ที่สไลด์ของหลักสูตรอ้างอิงเลขบรรทัดไว้ จึงห้ามแก้ |
+
+### อ่านผลลัพธ์บนหน้าจอยังไง
+
+ทุก Lab ตั้งแต่ Lab 3 พิมพ์ผลออกมาแบบนี้:
+
+| บรรทัดที่เห็น | แปลว่า |
+| --- | --- |
+| `[user] …` | คำถามที่คุณส่งเข้าไป |
+| `[step N] THINK -> ขอเรียก K tool` | รอบคิดที่ N — AI ตัดสินใจว่าจะใช้ tool K ตัว |
+| `TOOL_USE calculate({...}) -> 60` | โปรแกรมเรียก tool ให้ AI แล้ว ได้ผลลัพธ์ `60` กลับมา |
+| `[step N] END_TURN` | AI พอใจแล้ว ไม่ขอใช้ tool อีก กำลังจะตอบ |
+| `[answer] …` | คำตอบสุดท้าย — สิ่งที่คุณจะเห็นถ้านี่เป็นหน้าแชท |
+| `HOOK …` (Lab 4) | ระบบตรวจ (hook) ดักไว้ — บล็อกหรือแก้ไขบางอย่างก่อน AI ทำต่อ |
+| `[resume] …` / `[clear] …` / `[compaction] …` (Lab 5) | โหลดความจำเก่ากลับมา / ล้างผล tool ก้อนใหญ่ของรอบก่อน / สรุปบทสนทนาเก่าเพื่อประหยัดที่ |
+| `[token] prompt=… completion=…` (Lab 2, 5) | ขนาดของสิ่งที่ส่งให้ AI และคำตอบ นับเป็น token — ยิ่ง `prompt` ใหญ่ยิ่งแพง |
+
+### ค่าใช้จ่าย
+
+ทุกครั้งที่รัน = เรียก AI จริงผ่าน **OpenRouter** ซึ่ง**คิดเงินตามการใช้จริง** (ไม่ใช่เหมาจ่ายรายเดือนแบบ
+ChatGPT Plus) — ต้องสมัครและเติมเงินก่อน ส่วนใหญ่ครั้งละไม่กี่สตางค์ถึงไม่กี่บาท ยกเว้น
+`compare_models.py` (Lab 2) ที่เรียก 3 โมเดลในครั้งเดียว และ Lab 5 ที่รันวนหลายรอบ —
+**Lab 2 แสดงบรรทัด `[cost]` เงินที่ถูกหักจริงของทุกครั้งที่เรียก** ทำ Lab 2 ให้จบก่อนจะได้รู้ว่าแต่ละครั้งเสียเท่าไร
 
 ## วิธีรัน (รันจาก root ของ repo เสมอ เพราะทุก Lab import ผ่าน `labs.core.*`)
 
+> ทำ [Lab 1](labs/lab1_setup/README.md) ให้จบก่อน (ติดตั้ง Python, สร้าง venv, ใส่ API key) —
+> และ **ทุกครั้งที่เปิด terminal ใหม่** ต้อง `cd` เข้า root ของ repo แล้ว `source .venv/bin/activate`
+> (Windows: `.venv\Scripts\activate`) ก่อนเสมอ — คำสั่งด้านล่างเขียนแบบ Mac/Linux, Windows ใช้ `python`
+> แทน `python3` และ `copy` แทน `cp`
+
 ```bash
 pip install -r requirements.txt
-cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys
+cp .env.example .env   # ใส่ OPENROUTER_API_KEY จริงจาก https://openrouter.ai/keys (ดูวิธีขอคีย์ใน Lab 1)
+                       # Windows: copy .env.example .env
 
+# ข้อความใน "..." ต่อท้ายคำสั่ง = คำถามที่จะส่งให้ AI — เปลี่ยนเป็นอะไรก็ได้
 python labs/lab1_setup/check_env.py            # ตรวจ OpenRouter (LLM) เท่านั้น — ควรผ่าน
 python labs/lab2_llm/first_llm.py "อธิบาย Agent Loop ใน 1 ประโยค"
 python labs/lab3_agent_loop/agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
@@ -33,13 +90,27 @@ python labs/lab5_memory_checkpoint/agent_loop.py "แนะนำตัวหน
 python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 ```
 
-เข้าไปอ่าน README ของแต่ละ Lab เพื่อดูรายละเอียดเพิ่มเติม
+> **⚠️ ข้อความตกค้างจาก repo ต้นทางที่จะเจอใน README ของ Lab 3** (ไฟล์นี้เป็นสำเนา byte-identical
+> จึงแก้ไม่ได้ เพราะสไลด์ของหลักสูตรอ้างอิงเลขบรรทัดไว้):
+> - เห็น `conda activate agentic-ai` → ให้ใช้ `source .venv/bin/activate` แทน (Windows: `.venv\Scripts\activate`)
+> - เห็น `cd Python-Agent-LangGraph` → ให้ใช้ `cd student-2026-AI-Harness-Engineering` แทน
+> - เห็นการอ้างถึง **Lab 7-9**, **LangGraph**, หรือไฟล์ภาพ `screenshots/labs/lab3_agent_loop.png` → ของเหล่านั้นอยู่ใน repo
+>   ต้นทางเท่านั้น ไม่มีใน repo นี้ ข้ามได้ ไม่ใช่คุณทำอะไรพลาด
+
+เข้าไปอ่าน README ของแต่ละ Lab เพื่อดูรายละเอียดเพิ่มเติม — และทุก Lab มี `QUESTIONS.md` เป็นแบบฝึกหัด
+ที่ติดป้ายไว้ว่าข้อไหน 🟢 แค่พิมพ์คำสั่ง · 🟡 ต้องเปิดแก้ไฟล์ · 🔴 ต้องเขียน Python
 
 ---
+
+> **ส่วนที่เหลือของหน้านี้สำหรับผู้สอน/ผู้ตรวจ** — ผู้เรียนข้ามไปอ่าน README ของแต่ละ Lab ได้เลย
+> ไม่ต้องเข้าใจตารางด้านล่างก่อนเริ่มทำ Lab
 
 ## สถาปัตยกรรม Agent: App → Agent → LLM + 8 Layers
 
 > อ้างอิงมาจาก root README.md ของ [Python-Agent-LangGraph](https://github.com/aekanun2020/Python-Agent-LangGraph#สถาปัตยกรรม-agent-app--agent--llm--8-layers)
+> — **นี่คือลิงก์เดียวไป repo ต้นทางในเอกสารชุดนี้** เก็บไว้สำหรับผู้ตรวจที่ต้องการยืนยันว่าไฟล์ที่ระบุ
+> byte-identical ตรงกับต้นฉบับจริง (ผู้เรียนไม่ต้องเปิด — repo นั้นมี 9 Lab, ใช้ conda และต่อ MCP server
+> ซึ่งต่างจาก repo นี้ เปิดไปอาจสับสน)
 > ใส่ไว้ที่นี่ด้วยเพื่อให้ลิงก์ "ตำแหน่งใน 8 Layer ของ repo" ที่ README ของแต่ละ Lab อ้างถึง
 > (เช่น [Lab 3](labs/lab3_agent_loop/README.md)) resolve ได้จริงในบริบท repo นี้
 
@@ -81,23 +152,24 @@ python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แ
 ### แต่ละ Lab ใน repo นี้อยู่ตรงไหนของ 8 Layer นี้
 
 สัญลักษณ์: ● = เป็นแกนหลักของ Lab นั้น · ◐ = แตะ/มีบางส่วน · (ว่าง) = ไม่มี — ตารางนี้เป็นของ repo นี้
-เอง (Lab 1/2/3/3a/4/5/6) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 7-9 · คอลัมน์
-L2 คงค่าตามที่ root README ของ repo ต้นทางให้ไว้ (ไฟล์เหมือนกันเป๊ะ ไม่ได้ประเมินใหม่) ส่วน L1
-ประเมินใหม่จากไฟล์ที่ตัด `check_mcp()` ออกแล้ว (ไม่ byte-identical กับต้นฉบับอีกต่อไป)
+เอง (Lab 1/2/3/3a/4/5/6/6b) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 7-9 · คอลัมน์
+L1/L2 ประเมินใหม่จากไฟล์ที่ดัดแปลงแล้ว (L1 ตัด `check_mcp()` ออก, L2 เพิ่มการแสดงค่าใช้จ่าย — ทั้งคู่
+ไม่ byte-identical กับต้นฉบับอีกต่อไป แต่การเพิ่ม/ตัดนั้นไม่กระทบว่า Lab แตะ layer ไหน ค่าจึงเท่าต้นฉบับ)
 
-| Layer | Lab 1 | Lab 2 | Lab 3 | Lab 3a | Lab 4 | Lab 5 | Lab 6 |
-| --- | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| 1. Instructions / Bootstrap | | | | ◐ | ◐ | | |
-| 2. Memory | | | | | | ● | |
-| 3. Tools + Skills | | | ● | ● | ● | ● | ● |
-| 4. Hooks | | | | | ● | | |
-| 5. Reasoning Loop (Agent Loop) | | | ● | ● | ● | ● | ● |
-| 6. Sandbox + Execution | | | ◐* | ◐* | ◐* | | ● |
-| 7. Gateway + Scheduler | | | | | | | |
-| 8. Safety Layer | | | ◐* | ◐* | ◐ | | ◐ |
+| Layer | Lab 1 | Lab 2 | Lab 3 | Lab 3a | Lab 4 | Lab 5 | Lab 6 | Lab 6b |
+| --- | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| 1. Instructions / Bootstrap | | | | ◐ | ◐ | | | ◐ |
+| 2. Memory | | | | | | ● | | |
+| 3. Tools + Skills | | | ● | ● | ● | ● | ● | ● (MCP) |
+| 4. Hooks | | | | | ● | | | |
+| 5. Reasoning Loop (Agent Loop) | | | ● | ● | ● | ● | ● | ● |
+| 6. Sandbox + Execution | | | ◐* | ◐* | ◐* | | ● | ● |
+| 7. Gateway + Scheduler | | | | | | | | |
+| 8. Safety Layer | | | ◐* | ◐* | ◐ | ◐* | ◐ | ◐ |
 
 > `◐*` = มีร่องรอย/พฤติกรรมคล้าย แต่ยังไม่ใช่ระบบจริงตามนิยาม layer (เช่น `calculate()`'s whitelist
-> eval เป็นการป้องกันแบบพื้นฐาน ไม่ใช่ sandbox จริงแบบ Docker/VM) · Lab 3a แตะ Layer 1 เพิ่มจาก Lab 3
+> eval เป็นการป้องกันแบบพื้นฐาน ไม่ใช่ sandbox จริงแบบ Docker/VM · Lab 5 แตะ Layer 8 ตรงที่ `read_file`
+> กันไม่ให้อ่านนอกโฟลเดอร์ repo และไฟล์ที่ขึ้นต้นด้วยจุดอย่าง `.env`) · Lab 3a แตะ Layer 1 เพิ่มจาก Lab 3
 > เพราะแก้ `SYSTEM` prompt (Instructions) เพื่อสั่ง self-correction
 >
 > **Layer 3 (Tools):** "Tools" ในตารางนี้หมายถึง function ใดๆ ที่ LLM เรียกใช้ได้จริง ไม่ว่าจะผ่าน
@@ -108,10 +180,18 @@ L2 คงค่าตามที่ root README ของ repo ต้นทา�
 > `lab7_memory` ต้นฉบับที่เป็นแค่ RAM) — ดู [Lab 5](labs/lab5_memory_checkpoint/README.md)
 >
 > **Lab 6** เป็น `●` จริงใน Layer 6 (subprocess + `RLIMIT_CPU` แยก process จริง ไม่ใช่แค่ whitelist
-> ตัวอักษร) ทดสอบแล้วด้วยการบังคับ resource exhaustion จริง — แต่**ยังไม่ครอบคลุม filesystem/network
-> isolation** เหมือน Docker ตัวเต็ม (ดูตารางเทียบ framework ใน [Lab 6](labs/lab6_sandbox/README.md))
+> ตัวอักษร) ทดสอบแล้วด้วยการบังคับ resource exhaustion จริง และกั้นความลับ/การเขียนไฟล์แล้ว (env มีแค่ `PATH`,
+> cwd ว่างชั่วคราว, `RLIMIT_FSIZE=0`) — แต่**ยังอ่านไฟล์นอกห้องได้และยังไม่มี network isolation** เหมือน
+> Docker ตัวเต็ม (ดูตารางเทียบ framework ใน [Lab 6](labs/lab6_sandbox/README.md))
+>
+> **Lab 6b** ปิดสองช่องนั้น: tool ทั้งหมดเป็น MCP server ใน Docker container (`--network none`, mount workspace
+> แบบ `:ro`, `--read-only`, `--cap-drop ALL`, user ไม่ใช่ root, ไม่มี `.env` ใน image) จึงเป็น `●` เต็มใน Layer 6
+> ทั้ง filesystem และ network isolation · Layer 3 เป็น `●` แบบ MCP จริง (agent ถาม `list_tools()` แทนเขียน `TOOLS` เอง)
+> · Layer 1 แตะเพราะ `SYSTEM` บอกโมเดลว่า tool อยู่ใน sandbox · แลกกับการต้องมี Docker — ดู
+> [Lab 6b](labs/lab6b_sandbox_container/README.md)
 >
 > **ช่องว่างที่ยังไม่มี Lab ไหนครอบคลุมเลย:** Layer 1 (เป็น core ล้วน, ยังไม่มี Lab ไหนทำเป็นแกนหลัก),
 > Layer 7 (Gateway/Scheduler), Layer 8 (Safety Layer เต็มรูปแบบ — มีแค่ audit trail บางส่วนจาก Lab 4),
-> filesystem/network sandboxing (ดูช่องว่างของ Lab 6 ด้านบน), tool-result clearing และ idempotent
-> retry (ยังไม่มี Lab ไหนทำ — ดูรายละเอียดใน [Lab 5 QUESTIONS.md](labs/lab5_memory_checkpoint/QUESTIONS.md))
+> network allowlist (Lab 6b ตัด network ทิ้งทั้งหมด ยังไม่มีแบบปล่อยเฉพาะโดเมน) และ idempotent retry (ยังไม่มี Lab ไหนทำ —
+> ดูรายละเอียดใน [Lab 5 QUESTIONS.md](labs/lab5_memory_checkpoint/QUESTIONS.md); tool-result clearing ทำแล้วใน Lab 5,
+> filesystem/network sandboxing ทำแล้วใน Lab 6b)

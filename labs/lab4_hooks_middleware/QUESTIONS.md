@@ -2,34 +2,44 @@
 
 > ดูคำอธิบาย hook engine และการออกแบบแบบเต็มที่ [README.md](README.md)
 
+> **ก่อนรันทุกคำสั่งในหน้านี้:** เปิด terminal → `cd` เข้าโฟลเดอร์ repo → `source .venv/bin/activate`
+> (Windows: `.venv\Scripts\activate` และใช้ `python` แทน `python3`) — ต้องเห็น `(.venv)` หน้า prompt
+> ถ้าเจอ error ว่าหา `openai` ไม่เจอ แปลว่าลืมขั้นนี้
+> ทุกคำสั่งรันจาก root ของ repo (ไม่ต้อง `cd` เข้าโฟลเดอร์ lab)
+
 ## คำถามตัวอย่าง (ค่า default ที่ฝังอยู่ในโค้ด `agent_loop_hooks.py`)
 
-ถ้ารัน `python labs/lab4_hooks_middleware/agent_loop_hooks.py` โดยไม่ใส่ argument agent จะใช้
+ถ้ารัน `python labs/lab4_hooks_middleware/agent_loop_hooks.py` โดยไม่พิมพ์คำถามต่อท้าย agent จะใช้
 คำถามเดียวกับ Lab 3:
 
 **คำถาม:** `ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร`
 
-คำถามนี้ไม่ควร trigger hook ไหนเป็น `deny` เลย (นิพจน์สั้น, ไม่มี secret, คำตอบมีตัวเลข) — ควรได้
-ผลลัพธ์เหมือน Lab 3 เป๊ะ บวกไฟล์ `agent_audit.log` ที่มี audit trail ของทุก tool call
+คำถามนี้ไม่ควรทำให้ hook ตัวไหนบล็อก (`deny`) เลย (นิพจน์สั้น, ไม่มีข้อมูลลับ, คำตอบมีตัวเลข) — ควรได้
+ผลลัพธ์เหมือน Lab 3 เป๊ะ **ไม่มีบรรทัด `HOOK …` โผล่** บวกไฟล์ `labs/lab4_hooks_middleware/agent_audit.log`
+ที่บันทึกทุก tool call ไว้ (เปิดดูด้วย text editor ธรรมดาได้)
 
 ---
 
-## แบบฝึกหัด: ทดสอบให้แต่ละ hook trigger จริง
+## แบบฝึกหัด: ทำให้แต่ละ hook ทำงานจริง
 
-| # | วิธีทดสอบ | Hook ที่ควร trigger | พฤติกรรมที่ควรเห็น |
-| --- | --- | --- | --- |
-| 1 | `python agent_loop_hooks.py "คำนวณ 1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1"` (นิพจน์ยาว >40 ตัวอักษร) | `guard_calculate_hook` — decision `deny` | เห็นบรรทัด `HOOK pre_tool DENY` และ `dispatch()` (`calculate` จริง) **ไม่ถูกเรียกเลย** |
-| 2 | ตั้งคำถามที่ทำให้ LLM ส่ง `expression: " 15*4 "` (มีช่องว่างหน้า-หลัง) | `guard_calculate_hook` — decision `modify` | ใน `agent_audit.log` ค่า `args.expression` ที่ถูก log ต้องถูก trim แล้ว (`"15*4"` ไม่มีช่องว่าง) |
-| 3 | รัน `python test_hooks.py` (ไม่ต้องมี API key) — ดู TEST RUN 2 | `redact_secrets_hook` | `agent_audit.log` ต้อง**ไม่มี**ข้อความ `sk-...` ดิบหลุดออกมาเลย มีแต่ `[REDACTED]` แทน |
-| 4 | รัน `python test_hooks.py` — ดู TEST RUN 1 (LLM ตอบแบบไม่มีตัวเลข) | `require_number_on_stop_hook` | เห็นบรรทัด `HOOK stop DENY` 1 ครั้ง แล้ว agent ต้องพยายามตอบใหม่จนมีตัวเลข |
+| # | ระดับ | วิธีทดสอบ | Hook ที่ทำงาน | บรรทัดที่ต้องมองหาบนหน้าจอ |
+| --- | --- | --- | --- | --- |
+| 1 | 🟢 | `python labs/lab4_hooks_middleware/agent_loop_hooks.py "คำนวณ 1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1"` (นิพจน์ยาว >40 ตัวอักษร) | `guard_calculate_hook` — บล็อก (`deny`) | บรรทัด `HOOK pre_tool DENY calculate: นิพจน์ยาวเกินไป …` และบรรทัด `TOOL_USE calculate(...)` ต้องลงท้ายด้วย `[hook denied] …` **ไม่ใช่ตัวเลขผลลัพธ์** — แปลว่าเครื่องคิดเลขจริงไม่ได้ถูกเรียกเลย |
+| 2 | 🟢 | `python labs/lab4_hooks_middleware/test_hooks.py` แล้วเลื่อนหาหัวข้อ `=== TEST RUN 1 ===` ในผลลัพธ์ | `guard_calculate_hook` — แก้ไข (`modify`) | ในผลลัพธ์ TEST RUN 1 บรรทัด `TOOL_USE calculate({'expression': '15*4'})` — สคริปต์ส่ง `" 15*4 "` (มีช่องว่างหน้า-หลัง) เข้ามา แต่ hook ตัดช่องว่างให้ก่อนถึงเครื่องคิดเลข |
+| 3 | 🟢 | `python labs/lab4_hooks_middleware/test_hooks.py` แล้วเลื่อนหาหัวข้อ `=== TEST RUN 2 ===` | `redact_secrets_hook` | บรรทัด `HOOK post_tool: [hook] พบ pattern คล้าย secret …` และ `TOOL_USE … -> here is the key: [REDACTED]` — ข้อความ `sk-…` ของจริง**ไม่โผล่**ที่ไหนเลย รวมถึงในไฟล์ `agent_audit.log` |
+| 4 | 🟢 | `python labs/lab4_hooks_middleware/test_hooks.py` แล้วดู `=== TEST RUN 1 ===` ช่วงท้าย | `require_number_on_stop_hook` | บรรทัด `[step 2] HOOK stop DENY: คำถามดูเหมือนมีการคำนวณ แต่คำตอบไม่มีตัวเลขเลย` แล้วมี `[step 3] END_TURN` ตามมา — AI ถูกบังคับให้ตอบใหม่จนมีตัวเลข |
 
-> เคส #1, #3, #4 รันซ้ำได้ผลแน่นอน (deterministic) เพราะ `test_hooks.py` stub คำตอบ LLM ไว้แล้ว
-> ส่วนเคส #2 ถ้ารันกับ LLM จริง (ไม่ใช่ test) ผลอาจไม่คงที่เพราะขึ้นกับว่า LLM จะใส่ช่องว่างในนิพจน์
-> หรือไม่ — ถ้าอยากเห็นแบบควบคุมได้ 100% ให้แก้ `test_hooks.py` เพิ่ม case ทดสอบเองได้
+> ข้อ 2-4 ใช้ `test_hooks.py` ซึ่ง**ไม่ต้องมี API key และไม่เสียเงิน** — มันสลับตัวเรียก AI จริงเป็นตัวปลอม
+> ที่ตอบตามบทที่เขียนไว้ ผลจึงเหมือนเดิมทุกครั้ง (deterministic) ต่างจากข้อ 1 ที่เรียก AI จริง
+> รันแล้วต้องเห็น `ALL TESTS PASSED` ที่บรรทัดสุดท้าย
 
-## แบบฝึกหัดต่อยอด (เขียน hook เพิ่มเอง)
+## แบบฝึกหัดต่อยอด — 🔴 สำหรับคนที่เขียน Python ได้แล้ว (ข้ามได้)
 
-1. เพิ่ม hook ใหม่ที่ `deny` คำถามที่มีคำหยาบ/ไม่เหมาะสม ก่อนถึง `pre_llm`
+1. เพิ่ม hook ใหม่ที่ `deny` คำถามที่มีคำหยาบ/ไม่เหมาะสม ที่ event `pre_llm`
 2. เพิ่ม hook `post_tool` ที่ปัดเศษผลลัพธ์จาก `calculate` ให้เหลือทศนิยม 2 ตำแหน่ง
-3. ลองสลับลำดับ `register("post_tool", audit_log_hook)` ให้มาก่อน `redact_secrets_hook` แล้วรัน
-   `test_hooks.py` อีกครั้ง — ควรเห็น `assert not secret_leaked` **fail** (พิสูจน์ว่าลำดับ hook สำคัญจริง)
+3. ใน `build_default_hooks()` ลองสลับให้ `register("post_tool", audit_log_hook)` มาก่อน
+   `redact_secrets_hook` แล้วรัน `test_hooks.py` อีกครั้ง — ต้องเห็น TEST RUN 2 **fail** (บรรทัด
+   `assert not secret_leaked`) พิสูจน์ว่าลำดับ hook สำคัญจริง: ถ้า log ก่อน redact ข้อมูลลับจะหลุดลง log
+
+> เฉลยเชิงพฤติกรรม ไม่ใช่เฉลยคำตอบตายตัว — ข้อ 1 ประโยคคำตอบของ AI ต่างกันทุกครั้ง สิ่งที่ต้องตรงคือ
+> **มี/ไม่มีบรรทัด `HOOK …`** ที่ระบุไว้ ไม่ใช่ข้อความคำตอบ

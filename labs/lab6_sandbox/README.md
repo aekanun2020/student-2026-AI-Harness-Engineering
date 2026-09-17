@@ -18,6 +18,10 @@
   production (Docker/VM ที่จำกัด filesystem/network ด้วย)
 - เจอปัญหา cross-platform จริง (macOS vs Linux) ที่ทำให้การออกแบบ sandbox portable ยากกว่าที่คิด
 
+**ในภาษาคน:** `eval()` คือการสั่งให้ Python คำนวณสูตรจากข้อความ เช่น `'15*4'` — อันตรายเพราะถ้าสูตรใหญ่มาก
+(เลขยกกำลังมหาศาล) เครื่องอาจค้าง · **sandbox** = ห้องแล็บที่มีผนังกันระเบิด — ทดลองพลาด ห้องนั้นพัง
+แต่ตึกไม่พัง (โปรแกรมหลักไม่กระทบ)
+
 ---
 
 ## รีเสิร์ช: อ้างอิงจากเอกสารจริง
@@ -35,20 +39,51 @@ Lab 3 เดิมรัน `eval()` **ตรงใน process หลักข�
 ถ้า expression ทำให้ CPU/memory พุ่ง (เช่น เลขยกกำลังมหาศาล `9999**99999999`) จะฉุด agent loop
 หลักไปด้วย หรือแย่กว่านั้นคือทำให้ทั้ง process ค้าง/ตาย
 
+สาระของโค้ดด้านล่าง (ไม่ต้องอ่านออกทุกบรรทัด): แทนที่จะคำนวณในโปรแกรมหลัก เราเปิด "โปรแกรมลูก"
+แยกออกมาคำนวณ ตั้งเวลาไว้ ถ้าเกินเวลาก็ฆ่าโปรแกรมลูกทิ้ง โปรแกรมหลักไม่เป็นไร:
+
 ```python
+SANDBOX_ENV = {k: os.environ[k] for k in ("PATH", "SYSTEMROOT") if k in os.environ}   # ไม่มี API key
+
+def _run_in_sandbox(code: str, arg: str):
+    with tempfile.TemporaryDirectory() as empty_dir:          # cwd ของลูก = โฟลเดอร์ว่างชั่วคราว
+        try:
+            return subprocess.run(
+                [sys.executable, "-I", "-c", code, arg],       # -I = isolated mode
+                capture_output=True, text=True, timeout=SANDBOX_TIMEOUT_SEC,
+                cwd=empty_dir, env=SANDBOX_ENV,
+            )
+        except subprocess.TimeoutExpired:
+            return None
+
 def sandboxed_calculate(expression: str) -> str:
     code = _WORKER_CODE.format(cpu_sec=SANDBOX_CPU_SEC, mem_bytes=SANDBOX_MEMORY_MB * 1024 * 1024)
-    try:
-        proc = subprocess.run(
-            [sys.executable, "-c", code, expression],
-            capture_output=True, text=True, timeout=SANDBOX_TIMEOUT_SEC,
-        )
-    except subprocess.TimeoutExpired:
+    proc = _run_in_sandbox(code, expression)
+    if proc is None:
         return f"error: sandbox timeout — คำนวณนานเกิน {SANDBOX_TIMEOUT_SEC} วินาที (agent loop หลักไม่กระทบ)"
     if proc.returncode != 0:
         return f"error: sandbox process ถูกยุติ (exit code {proc.returncode}, เกิน CPU/memory limit)"
     ...
 ```
+
+### ห้องนี้กั้นอะไรบ้าง (หลัก Isolation: เข้าถึงได้เฉพาะที่อนุญาต)
+
+| ขอบเขต | ทำอย่างไร | ผล |
+| --- | --- | --- |
+| ความลับ (env) | ส่ง `env=SANDBOX_ENV` ที่มีแค่ `PATH` ไม่ส่ง `os.environ` ทั้งก้อน | process ลูก **ไม่เห็น** `OPENROUTER_API_KEY` แม้ process แม่โหลด `.env` ไว้แล้ว — credential อยู่นอก sandbox ตามแนวทาง Anthropic |
+| โฟลเดอร์ทำงาน (cwd) | `cwd=` โฟลเดอร์ว่างชั่วคราวจาก `tempfile.TemporaryDirectory()` | ลูกไม่ได้ยืนอยู่ในโฟลเดอร์ repo และ `python -I` ไม่เอา cwd เข้า `sys.path` |
+| เขียนไฟล์ | `RLIMIT_FSIZE = 0` ใน worker | เขียนไบต์แรกก็ได้ `OSError: File too large` (macOS/Linux) |
+| CPU / เวลา | `RLIMIT_CPU` + `timeout=` ของ `subprocess.run()` | ลูกถูก OS ฆ่าที่ 2 วินาที CPU หรือแม่ฆ่าที่ 4 วินาที |
+
+พิสูจน์ด้วยตาได้โดยไม่ต้องเรียก LLM:
+
+```bash
+python labs/lab6_sandbox/probe_sandbox.py
+```
+
+จะเห็น `api_key_visible: false`, `cwd_is_empty: true`, การเขียนไฟล์ได้ `OSError: File too large` — และเห็นช่องว่างที่เหลือคือ
+`can_read_outside: true` (ยังอ่านไฟล์ทั่วเครื่องได้) ซึ่ง subprocess + `resource` ปิดไม่ได้ ต้องใช้ container/VM —
+**[Lab 6b](../lab6b_sandbox_container/README.md)** ปิดช่องนี้ (และ network) ด้วย Docker container
 
 `_WORKER_CODE` คือสคริปต์เล็กๆ ที่รันใน **subprocess แยกจริง**: ตั้ง `resource.setrlimit(RLIMIT_CPU, ...)`
 ก่อน `eval()` แล้วค่อยประเมิน expression — ถ้าเกิน CPU limit, OS จะส่ง signal ฆ่า subprocess ทิ้งเอง
@@ -56,12 +91,23 @@ def sandboxed_calculate(expression: str) -> str:
 
 ### หมายเหตุข้ามแพลตฟอร์ม (บทเรียนจริงจากการ dev)
 
+**สรุปสั้น:** แต่ละ OS ให้เครื่องมือจำกัดโปรแกรมลูกไม่เท่ากัน — Linux จำกัดได้ทั้ง CPU และ memory ·
+Mac จำกัดได้แค่เวลา CPU · **Windows จำกัดไม่ได้เลย** (ไม่มีโมดูล `resource`) เหลือแค่ตั้งเวลาให้
+โปรแกรมหลักฆ่าโปรแกรมลูกทิ้งเมื่อครบกำหนด — โค้ดเขียนให้ทำงานได้ทั้ง 3 ระบบโดยไม่พัง แค่ระดับการป้องกัน
+ต่างกัน รายละเอียดเชิงเทคนิคด้านล่างข้ามได้ถ้ายังไม่เขียนโค้ด
+
 ตอน dev บน macOS พบว่า **`resource.RLIMIT_AS` (จำกัด memory) ตั้งค่าไม่ได้เลย** บน Darwin kernel —
 `resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024,)*2)` ได้ `ValueError: current limit exceeds
 maximum limit` เสมอไม่ว่าจะตั้งค่าเท่าไหร่ (macOS ไม่รองรับการบังคับ RLIMIT_AS จริงจัง ต่างจาก Linux)
 แต่ `RLIMIT_CPU` ใช้ได้ปกติทั้ง 2 แพลตฟอร์ม — โค้ดเลย wrap `RLIMIT_AS` ด้วย `try/except` ให้ใช้เมื่อ
 แพลตฟอร์มรองรับ (Linux) แต่ไม่ crash เมื่อไม่รองรับ (macOS) เหลือ `RLIMIT_CPU` + `timeout` ของ
 `subprocess.run()` เป็นตาข่ายความปลอดภัยที่พกพาข้ามแพลตฟอร์มได้จริง
+
+**Windows** ไปไกลกว่านั้น: โมดูล `resource` **ไม่มีอยู่เลย** (`import resource` ได้ `ModuleNotFoundError`)
+โค้ดจึง wrap ทั้งก้อนด้วย `try/except ImportError` — บน Windows จะไม่มี CPU/memory limit ระดับ OS
+เหลือแค่ `timeout=SANDBOX_TIMEOUT_SEC` ของ `subprocess.run()` ฝั่งโปรแกรมหลักเป็นตาข่ายเดียว
+(ยังฆ่าโปรแกรมลูกที่ค้างได้ แค่รอครบ 4 วินาทีก่อน แทนที่จะโดน OS ตัดที่ 2 วินาที CPU) — ผลลัพธ์บน
+Windows จึงเป็น `error: sandbox timeout …` แทน `exit code -24`
 
 **บทเรียน:** กลไก isolation ไม่ portable เท่ากันทุกแพลตฟอร์ม การออกแบบ sandbox ต้องมี fallback
 เผื่อกลไกบางตัวใช้ไม่ได้ ไม่ใช่ตั้งสมมติฐานว่า OS ไหนก็รองรับเหมือนกันหมด
@@ -75,7 +121,8 @@ maximum limit` เสมอไม่ว่าจะตั้งค่าเท�
 [step 2] END_TURN
 ```
 
-`exit code -24` = process ถูกฆ่าด้วย signal `SIGXCPU` (ตรงตามที่ `RLIMIT_CPU` ควรทำ) — **agent loop
+`exit code -24` = process ถูกฆ่าด้วย signal `SIGXCPU` (ตรงตามที่ `RLIMIT_CPU` ควรทำ — ตัวเลขติดลบ
+แปลว่าโปรแกรมลูกถูกระบบฆ่า ไม่ใช่จบเอง) — **agent loop
 หลักไม่กระทบเลย** ได้ error string กลับมาให้ LLM อ่านต่อได้ปกติ ต่างจาก Lab 3 เดิมที่ `eval()` ตัวนี้
 จะรันค้างอยู่ใน process หลักโดยตรง
 
@@ -83,17 +130,20 @@ maximum limit` เสมอไม่ว่าจะตั้งค่าเท�
 
 ## ข้อจำกัดของ sandbox นี้ (ยังไม่ใช่ของจริงระดับ production)
 
-sandbox นี้จำกัดแค่ **process + CPU time** เท่านั้น — ยัง**ไม่ได้จำกัด filesystem** (subprocess
-ยังอ่าน/เขียนไฟล์บนเครื่องได้เต็มที่ ถ้ามีใครแอบใส่โค้ดที่ทำแบบนั้นเข้ามาได้) และ**ไม่ได้จำกัด network**
-เลย (ไม่มี allowlist domain เหมือนที่ Computer Use Tool ทำ) — เพราะ `calculate()` ของเราจำกัดด้วย
-whitelist อักขระอยู่แล้วจนไม่มีทางเรียก I/O ได้ตั้งแต่แรก แต่ถ้าเป็น tool ที่รันโค้ดทั่วไป (ไม่ใช่แค่
-เลขคณิต) ข้อจำกัดนี้จะสำคัญมาก — ดูตารางเทียบ framework ด้านล่าง
+sandbox นี้กั้นได้แค่ **process + CPU time + ห้ามเขียนไฟล์ + env/cwd แยก** — ยัง**อ่านไฟล์ทั่วเครื่องได้**
+(subprocess ไม่มีเครื่องมือกันการอ่าน) และ**ไม่ได้จำกัด network** เลย (ไม่มี allowlist domain เหมือนที่
+Computer Use Tool หรือ Claude Code sandbox ทำ) — Anthropic ย้ำว่า sandbox ที่ได้ผลต้องมี **ทั้ง filesystem
+และ network isolation** ขาดด้านใดด้านหนึ่ง อีกด้านจะถูกใช้หลบออก (อ่าน SSH key แล้วส่งออกทาง network ได้)
+วันนี้ยังไม่รั่วเพราะ `calculate()` จำกัดด้วย whitelist อักขระจนไม่มีทางเรียก I/O ได้ตั้งแต่แรก แต่ถ้าเป็น tool
+ที่รันโค้ดทั่วไป (ไม่ใช่แค่เลขคณิต) ช่องว่างสองข้อนี้จะสำคัญมาก — ปิดได้ด้วย container/VM เท่านั้น ดูตารางเทียบด้านล่าง
 
 ## เทียบกับ framework จริงในระบบนิเวศ
 
+ไม่ต้องรู้จักทุกชื่อในตาราง — แค่รู้ว่าของจริงในอุตสาหกรรมกันหนากว่าที่เราทำใน Lab นี้มาก:
+
 | Framework | ระดับ isolation | ครอบคลุม filesystem/network ไหม |
 | --- | --- | --- |
-| **`subprocess` + `resource` (ที่นี่)** | Process-level, CPU time เท่านั้น | ❌ ไม่ครอบคลุม |
+| **`subprocess` + `resource` (ที่นี่)** | Process-level: CPU time, ห้ามเขียนไฟล์ (`RLIMIT_FSIZE`), env/cwd แยก | ◐ กันเขียนไฟล์และความลับหลุดได้ แต่ยังอ่านไฟล์และต่อ network ได้ |
 | **Docker** | Container-level | ✅ (ref implementation ของ Anthropic Computer Use เอง — isolated filesystem + network allowlist) |
 | **E2B** | Managed sandbox-as-a-service | ✅ ออกแบบมาเฉพาะสำหรับรันโค้ดที่ AI agent สร้าง |
 | **gVisor / Firecracker** | VM-level (microVM) | ✅ isolation แน่นกว่า Docker — ที่ AWS Lambda/Fly.io ใช้จริง |
@@ -104,6 +154,7 @@ whitelist อักขระอยู่แล้วจนไม่มีทา�
 
 ```bash
 python labs/lab6_sandbox/agent_loop.py "<คำถาม>"
+python labs/lab6_sandbox/probe_sandbox.py      # ดูว่าห้องกั้นอะไรได้บ้าง ไม่เรียก LLM
 ```
 
 ดูแบบฝึกหัดเพิ่มเติมที่ [QUESTIONS.md](QUESTIONS.md)

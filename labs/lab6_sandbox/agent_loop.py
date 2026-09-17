@@ -18,12 +18,20 @@ SANDBOX — sandboxed_calculate()
   (แนวคิดเดียวกับ "minimal privilege + resource limit" ของ Computer Use Tool) ถ้า subprocess
   ถูกฆ่าเพราะเกิน limit หรือ timeout, agent loop หลักไม่กระทบเลย ได้ error กลับมาแทน
 
-  หมายเหตุขอบเขต: sandbox นี้จำกัดแค่ "process + CPU time" เท่านั้น — ยังไม่ได้จำกัด filesystem
-  หรือ network เหมือน Docker container ตัวเต็ม (ดู README สำหรับตารางเทียบ framework จริง)
+  ขอบเขตที่กั้นให้ process ลูก (หลัก isolation: เข้าถึงได้เฉพาะที่อนุญาต)
+    - env      : ส่งเข้าไปแค่ PATH — ไม่มี OPENROUTER_API_KEY หรือความลับอื่นจาก .env (credential อยู่นอก sandbox)
+    - cwd      : โฟลเดอร์ว่างชั่วคราว ไม่ใช่โฟลเดอร์ repo
+    - เขียนไฟล์ : RLIMIT_FSIZE = 0 → เขียนไฟล์ไม่ได้เลยในระดับ OS (macOS/Linux) ได้ OSError: File too large
+    - CPU      : RLIMIT_CPU + timeout ของ subprocess.run() ฝั่งแม่
+    - python -I: isolated mode ไม่อ่านตัวแปร PYTHON* และไม่เอา cwd เข้า sys.path
+
+  หมายเหตุขอบเขต: ยัง "อ่าน" ไฟล์ทั่วเครื่องได้ และยัง "ต่อ network" ได้ — สองอย่างนี้ subprocess + resource
+  ทำไม่ได้ ต้องใช้ container/VM (ดู README สำหรับตารางเทียบ framework จริง)
+  บน Windows โมดูล resource ไม่มี จึงเหลือแค่ env/cwd + timeout (ยังกัน process หลักได้ แต่ช้ากว่า)
 
 รัน:  python labs/lab6_sandbox/agent_loop.py "<คำถาม>"
 """
-import sys, os, json, datetime, subprocess
+import sys, os, json, datetime, subprocess, tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -38,17 +46,27 @@ def get_time() -> str:
 SANDBOX_CPU_SEC = 2          # จำกัดเวลา CPU ของ subprocess (วินาที)
 SANDBOX_MEMORY_MB = 64       # จำกัด memory ของ subprocess (MB) — ใช้ได้เฉพาะแพลตฟอร์มที่รองรับ RLIMIT_AS
 SANDBOX_TIMEOUT_SEC = 4      # เพดานเวลารอผลจริง (กันเผื่อ subprocess ค้างไม่ยอมตาย)
+SANDBOX_ENV = {k: os.environ[k] for k in ("PATH", "SYSTEMROOT") if k in os.environ}
+# ↑ environment ที่ส่งให้ process ลูก มีแค่นี้ — ไม่ส่ง os.environ ทั้งก้อน เพราะ core/config.py โหลด .env
+#   (OPENROUTER_API_KEY) เข้า os.environ ไว้แล้ว ถ้าส่งต่อ ความลับจะไปอยู่ "ในห้อง" ที่เราเรียกว่า sandbox
 
 _WORKER_CODE = """
-import sys, json, resource
+import sys, json
 cpu_sec = {cpu_sec}
 mem_bytes = {mem_bytes}
-resource.setrlimit(resource.RLIMIT_CPU, (cpu_sec, cpu_sec))
 try:
-    # RLIMIT_AS ไม่รองรับบน macOS (Darwin kernel ปฏิเสธเสมอ) แต่รองรับบน Linux —
-    # ใส่ไว้เมื่อแพลตฟอร์มรองรับ ถ้าไม่รองรับก็ข้ามไป เหลือ RLIMIT_CPU + timeout ข้างนอกเป็นตาข่ายกัน
-    resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
-except (ValueError, OSError):
+    import resource   # มีเฉพาะ Unix (macOS/Linux) — Windows ไม่มีโมดูลนี้
+    resource.setrlimit(resource.RLIMIT_CPU, (cpu_sec, cpu_sec))
+    resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))   # ห้ามเขียนไฟล์: เขียนไบต์แรกก็ได้ OSError: File too large
+    try:
+        # RLIMIT_AS ไม่รองรับบน macOS (Darwin kernel ปฏิเสธเสมอ) แต่รองรับบน Linux —
+        # ใส่ไว้เมื่อแพลตฟอร์มรองรับ ถ้าไม่รองรับก็ข้ามไป
+        resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
+    except (ValueError, OSError):
+        pass
+except ImportError:
+    # Windows: ไม่มี resource limit ระดับ OS ให้ใช้ — เหลือ timeout ของ subprocess.run() ฝั่ง parent
+    # เป็นตาข่ายเดียว (ยังฆ่า process ลูกที่ค้างได้ แค่ช้ากว่า RLIMIT_CPU และไม่จำกัด memory)
     pass
 
 expression = sys.argv[1]
@@ -64,14 +82,24 @@ else:
 """
 
 
+def _run_in_sandbox(code: str, arg: str):
+    """รันสคริปต์ python ใน process ลูกที่ถูกกั้นขอบเขต: env มีแค่ PATH, cwd = โฟลเดอร์ว่างชั่วคราว, python -I
+    คืน CompletedProcess หรือ None ถ้าเกิน timeout (probe_sandbox.py ใช้ helper ตัวนี้พิสูจน์ขอบเขตจริง)"""
+    with tempfile.TemporaryDirectory() as empty_dir:
+        try:
+            return subprocess.run(
+                [sys.executable, "-I", "-c", code, arg],
+                capture_output=True, text=True, timeout=SANDBOX_TIMEOUT_SEC,
+                cwd=empty_dir, env=SANDBOX_ENV,
+            )
+        except subprocess.TimeoutExpired:
+            return None
+
+
 def sandboxed_calculate(expression: str) -> str:
     code = _WORKER_CODE.format(cpu_sec=SANDBOX_CPU_SEC, mem_bytes=SANDBOX_MEMORY_MB * 1024 * 1024)
-    try:
-        proc = subprocess.run(
-            [sys.executable, "-c", code, expression],
-            capture_output=True, text=True, timeout=SANDBOX_TIMEOUT_SEC,
-        )
-    except subprocess.TimeoutExpired:
+    proc = _run_in_sandbox(code, expression)
+    if proc is None:
         return f"error: sandbox timeout — คำนวณนานเกิน {SANDBOX_TIMEOUT_SEC} วินาที (agent loop หลักไม่กระทบ)"
 
     if proc.returncode != 0:

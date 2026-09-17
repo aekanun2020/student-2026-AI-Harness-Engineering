@@ -2,9 +2,13 @@
 Lab 2 — เรียกใช้ LLM API ครั้งแรกด้วย Python ผ่าน OpenRouter
 อ้างอิง outline: บทที่ 1.2 / แบบฝึกหัดที่ 2
 
+ดัดแปลงจาก labs/lab2_llm/first_llm.py ของ repo ต้นทาง — เพิ่มการแสดง "ค่าใช้จ่ายจริง" ของแต่ละครั้ง
+ที่เรียก API (OpenRouter คืนมาให้เมื่อขอ usage accounting) โค้ดส่วนอื่นเหมือนต้นฉบับ
+
 เรียนรู้:
   - โครงสร้าง messages (system / user / assistant) และ role
   - อ่าน token usage (prompt / completion / total) เพื่อบริหารค่าใช้จ่าย (บทที่ 1.1)
+  - อ่านค่าใช้จ่ายจริงเป็นเงิน (usage.cost) ที่ OpenRouter หักจากเครดิตของเรา
 
 รัน:  python labs/lab2_llm/first_llm.py "คำถามของคุณ"
 """
@@ -15,16 +19,28 @@ from labs.core import config, llm
 
 SYSTEM = "คุณเป็นผู้ช่วยด้านเทคนิคที่ตอบกระชับ ตรงประเด็น เป็นภาษาไทย"
 
+# OpenRouter คิดเงินเป็น USD — แปลงเป็นบาทให้ดูง่าย (อัตราโดยประมาณ ปรับได้ตามจริง)
+USD_TO_THB = 36.0
+
+# ขอให้ OpenRouter แนบค่าใช้จ่ายจริงมากับ response (usage.cost) — ส่งผ่าน **kwargs ของ llm.chat()
+USAGE_ACCOUNTING = {"extra_body": {"usage": {"include": True}}}
+
+
+def cost_of(resp) -> float | None:
+    """ดึงค่าใช้จ่าย (USD) จาก response — คืน None ถ้า provider ไม่ได้แนบมา"""
+    return getattr(resp.usage, "cost", None)
+
 
 def ask(question: str, max_tokens: int | None = None):
     messages = [
         {"role": "system", "content": SYSTEM},   # system : กำหนดบทบาท/พฤติกรรม
         {"role": "user", "content": question},    # user   : คำถามจากผู้ใช้
     ]
-    resp = llm.chat(messages=messages, max_tokens=max_tokens)
+    resp = llm.chat(messages=messages, max_tokens=max_tokens, **USAGE_ACCOUNTING)
 
     answer = resp.choices[0].message.content
     usage = resp.usage   # ฝึกบริหาร token: ดูว่าใช้ token ไปเท่าไร
+    cost = cost_of(resp)
 
     print("=" * 60)
     print(f"[user]   {question}")
@@ -32,6 +48,10 @@ def ask(question: str, max_tokens: int | None = None):
     print("-" * 60)
     print(f"[token] prompt={usage.prompt_tokens} "
           f"completion={usage.completion_tokens} total={usage.total_tokens}")
+    if cost is not None:
+        print(f"[cost]  ${cost:.6f} USD  (≈ {cost * USD_TO_THB:.4f} บาท)  <- หักจากเครดิต OpenRouter จริง")
+    else:
+        print("[cost]  (provider ไม่ได้แนบค่าใช้จ่ายมา)")
     print(f"[model] {config.OPENROUTER_MODEL}")
     return answer
 
