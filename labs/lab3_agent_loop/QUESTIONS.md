@@ -41,22 +41,25 @@
 บรรทัดที่ 69 ของ `agent_loop.py` คือ `msg = resp.choices[0].message` — คำถามที่มักตามมาคือ
 **(1)** หลังจุด `resp.` เรียกอะไรได้อีกนอกจาก `choices` และ **(2)** `msg` บรรจุอะไรบ้าง
 
-ไม่ต้องเดา ให้โปรแกรมพิมพ์ของจริงออกมาดู (🟢 แค่พิมพ์คำสั่ง เรียก AI 2 ครั้ง):
+ไม่ต้องเดา ให้โปรแกรมพิมพ์ของจริงออกมาดู — `inspect_response.py` คือ `agent_loop.py` **ทั้งไฟล์เหมือนเดิม**
+เพิ่มแค่บรรทัด `[inspect]` ไม่กี่บรรทัดหลังบรรทัดที่ 69 (เปิด 2 ไฟล์เทียบกันได้ ส่วนที่เพิ่มมีป้าย `# ---- (เพิ่ม)`)
+รันด้วยคำสั่งเดียวกับ Lab 3 (🟢 แค่พิมพ์คำสั่ง):
 
 ```bash
-python labs/lab3_agent_loop/inspect_response.py
+python labs/lab3_agent_loop/inspect_response.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 ```
 
-`inspect_response.py` ใช้ `TOOLS`/`SYSTEM` ชุดเดียวกับ `agent_loop.py` แล้วถาม 2 คำถาม — คำถามแรก AI จะ**ขอเรียก tool**
-คำถามที่สอง AI จะ**ตอบเป็นข้อความ** — แล้วพิมพ์ทุก field ที่มีจริงของ `resp` และ `msg` ทั้ง 2 กรณีเทียบกัน
+ผลลัพธ์เหมือน `agent_loop.py` ทุกบรรทัด บวกบรรทัด `[inspect]` ก่อน `[step N]` ของทุกรอบ — คำถามนี้ AI จะวน 2 รอบ
+รอบแรก**ขอเรียก tool** รอบสอง**ตอบเป็นข้อความ** จึงเห็นทั้ง 2 กรณีในการรันครั้งเดียว
 
 **บรรทัดที่ต้องมองหา:**
-- `field ทั้งหมดที่มีจริง: ['id', 'choices', 'created', 'model', 'object', … 'usage', 'provider']` — นี่คือคำตอบข้อ (1)
-  ที่ใช้บ่อยคือ `resp.usage` (นับ token / ค่าใช้จ่าย ที่ Lab 2 ใช้) และ `resp.choices[0].finish_reason`
-- `msg.tool_calls = list ยาว 2` ในคำถามแรก กับ `msg.tool_calls = None` ในคำถามที่สอง — นี่คือคำตอบข้อ (2):
-  `msg` มี `.role` / `.content` / `.tool_calls` และ `agent_loop.py` ตัดสินใจจาก `.tool_calls` เท่านั้น
-- `tc.function.arguments = '{"expression": "15*4"}'` มีเครื่องหมายคำพูดครอบ = เป็น**ข้อความ** ไม่ใช่ dict —
-  เหตุผลที่บรรทัด 79 ต้อง `json.loads()` ก่อน
+- `[inspect] resp เป็น ChatCompletion มี field: ['id', 'choices', 'created', 'model', … 'usage', 'provider']` — คำตอบข้อ (1)
+  ที่ใช้บ่อยคือ `resp.usage` (นับ token ที่ Lab 2 ใช้) และ `resp.choices[0].finish_reason` (`'tool_calls'` vs `'stop'`)
+- `[inspect] msg เป็น ChatCompletionMessage มี field: ['content', 'refusal', 'role', … 'tool_calls', …]` — คำตอบข้อ (2)
+  รอบแรก `msg.tool_calls[..]: … name=get_time …` / `name=calculate …` · รอบสอง `msg.tool_calls=None (ไม่มี = END_TURN)`
+  — `agent_loop.py` บรรทัด 71 ตัดสินใจจาก `.tool_calls` เท่านั้น ไม่ได้ดู `.content`
+- `arguments='{"expression": "15*4"}'` มีเครื่องหมายคำพูดครอบ = เป็น**ข้อความ** ไม่ใช่ dict — เหตุผลที่บรรทัด 79
+  ต้อง `json.loads()` ก่อน
 
 ---
 
