@@ -3,7 +3,7 @@
 > ดูคำอธิบายโค้ดและวิธีรันแบบเต็มที่ [README.md](README.md) — README นั้นเป็นสำเนาจาก repo ต้นทาง จึงมี
 > คำสั่งเก่าตกค้าง: เห็น `conda activate agentic-ai` ให้ใช้ `source .venv/bin/activate` (Windows: `.venv\Scripts\activate`) แทน, เห็น
 > `cd Python-Agent-LangGraph` ให้ใช้ `cd student-2026-AI-Harness-Engineering` แทน, และ Lab 8 /
-> โฟลเดอร์ `screenshots/` ที่อ้างถึงไม่มีใน repo นี้ ข้ามได้
+> ไฟล์ `screenshots/labs/lab3_agent_loop.png` ที่อ้างถึงไม่มีใน repo นี้ ข้ามได้
 
 > **ก่อนรันทุกคำสั่งในหน้านี้:** เปิด terminal → `cd` เข้าโฟลเดอร์ repo → `source .venv/bin/activate`
 > (Windows: `.venv\Scripts\activate` และใช้ `python` แทน `python3`) — ต้องเห็น `(.venv)` หน้า prompt

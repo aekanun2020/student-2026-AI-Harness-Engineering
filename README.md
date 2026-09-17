@@ -94,7 +94,7 @@ python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แ
 > จึงแก้ไม่ได้ เพราะสไลด์ของหลักสูตรอ้างอิงเลขบรรทัดไว้):
 > - เห็น `conda activate agentic-ai` → ให้ใช้ `source .venv/bin/activate` แทน (Windows: `.venv\Scripts\activate`)
 > - เห็น `cd Python-Agent-LangGraph` → ให้ใช้ `cd student-2026-AI-Harness-Engineering` แทน
-> - เห็นการอ้างถึง **Lab 7-9**, **LangGraph**, หรือโฟลเดอร์ `screenshots/` → ของเหล่านั้นอยู่ใน repo
+> - เห็นการอ้างถึง **Lab 7-9**, **LangGraph**, หรือไฟล์ภาพ `screenshots/labs/lab3_agent_loop.png` → ของเหล่านั้นอยู่ใน repo
 >   ต้นทางเท่านั้น ไม่มีใน repo นี้ ข้ามได้ ไม่ใช่คุณทำอะไรพลาด
 
 เข้าไปอ่าน README ของแต่ละ Lab เพื่อดูรายละเอียดเพิ่มเติม — และทุก Lab มี `QUESTIONS.md` เป็นแบบฝึกหัด
