@@ -36,6 +36,30 @@
 
 ---
 
+## เจาะดูข้างใน `resp` กับ `msg` (คำถามที่ถามกันในห้องเรียน)
+
+บรรทัดที่ 69 ของ `agent_loop.py` คือ `msg = resp.choices[0].message` — คำถามที่มักตามมาคือ
+**(1)** หลังจุด `resp.` เรียกอะไรได้อีกนอกจาก `choices` และ **(2)** `msg` บรรจุอะไรบ้าง
+
+ไม่ต้องเดา ให้โปรแกรมพิมพ์ของจริงออกมาดู (🟢 แค่พิมพ์คำสั่ง เรียก AI 2 ครั้ง):
+
+```bash
+python labs/lab3_agent_loop/inspect_response.py
+```
+
+`inspect_response.py` ใช้ `TOOLS`/`SYSTEM` ชุดเดียวกับ `agent_loop.py` แล้วถาม 2 คำถาม — คำถามแรก AI จะ**ขอเรียก tool**
+คำถามที่สอง AI จะ**ตอบเป็นข้อความ** — แล้วพิมพ์ทุก field ที่มีจริงของ `resp` และ `msg` ทั้ง 2 กรณีเทียบกัน
+
+**บรรทัดที่ต้องมองหา:**
+- `field ทั้งหมดที่มีจริง: ['id', 'choices', 'created', 'model', 'object', … 'usage', 'provider']` — นี่คือคำตอบข้อ (1)
+  ที่ใช้บ่อยคือ `resp.usage` (นับ token / ค่าใช้จ่าย ที่ Lab 2 ใช้) และ `resp.choices[0].finish_reason`
+- `msg.tool_calls = list ยาว 2` ในคำถามแรก กับ `msg.tool_calls = None` ในคำถามที่สอง — นี่คือคำตอบข้อ (2):
+  `msg` มี `.role` / `.content` / `.tool_calls` และ `agent_loop.py` ตัดสินใจจาก `.tool_calls` เท่านั้น
+- `tc.function.arguments = '{"expression": "15*4"}'` มีเครื่องหมายคำพูดครอบ = เป็น**ข้อความ** ไม่ใช่ dict —
+  เหตุผลที่บรรทัด 79 ต้อง `json.loads()` ก่อน
+
+---
+
 ## แบบฝึกหัดสำหรับผู้เรียน
 
 ทุกข้อเป็น 🟢 แค่พิมพ์คำสั่ง — รันคำถามด้านล่างทีละข้อ (`python labs/lab3_agent_loop/agent_loop.py "<คำถาม>"`)
