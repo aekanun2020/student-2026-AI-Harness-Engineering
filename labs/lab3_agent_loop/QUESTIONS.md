@@ -41,26 +41,31 @@
 บรรทัดที่ 69 ของ `agent_loop.py` คือ `msg = resp.choices[0].message` — คำถามที่มักตามมาคือ
 **(1)** หลังจุด `resp.` เรียกอะไรได้อีกนอกจาก `choices` และ **(2)** `msg` บรรจุอะไรบ้าง
 
-ไม่ต้องเดา ให้โปรแกรมพิมพ์ของจริงออกมาดู — เพิ่ม `print()` 2 บรรทัดต่อจากบรรทัดที่ 69 (`.model_dump_json(indent=2)`
-= แปลงเป็นข้อความแบบจัดบรรทัดให้อ่านง่าย ถ้า `print(resp)` เฉยๆ จะได้บรรทัดเดียวยาวมาก):
+ไม่ต้องเดา ให้โปรแกรมพิมพ์ของจริงออกมาดู — ค่า 2 ตัวนี้เกิดที่บรรทัด **68** (`resp = llm.chat(...)`) และ **69**
+(`msg = resp.choices[0].message`) ของ `agent_loop.py` เราแค่เพิ่ม `print()` ต่อจากบรรทัด 69 ให้พิมพ์ทั้งคู่ออกมา
+(`.model_dump_json(indent=2)` = แปลงเป็นข้อความแบบจัดบรรทัดให้อ่านง่าย ถ้า `print(resp)` เฉยๆ จะได้บรรทัดเดียวยาวมาก):
 
 ```python
         msg = resp.choices[0].message
+        print(f"---- [step {step}] resp : ค่าจาก agent_loop.py บรรทัด 68  resp = llm.chat(messages=messages, tools=TOOLS) ----")
         print(resp.model_dump_json(indent=2))   # (1)
+        print(f"---- [step {step}] msg  : ค่าจาก agent_loop.py บรรทัด 69  msg = resp.choices[0].message ----")
         print(msg.model_dump_json(indent=2))    # (2)
 ```
 
-`inspect_response.py` คือ `agent_loop.py` ทั้งไฟล์ที่เพิ่มแค่ 2 บรรทัดนี้ (🟢 แค่พิมพ์คำสั่ง รันเหมือน Lab 3):
+`inspect_response.py` คือ `agent_loop.py` ทั้งไฟล์ที่เพิ่มแค่ 4 บรรทัดนี้ (🟢 แค่พิมพ์คำสั่ง รันเหมือน Lab 3):
 
 ```bash
 python labs/lab3_agent_loop/inspect_response.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 ```
 
-**บรรทัดที่ต้องมองหา** (แต่ละ print ได้ก้อน `{ … }` หนึ่งก้อน ชื่อในเครื่องหมายคำพูดหน้า `:` คือชื่อช่อง):
-- ก้อนแรกที่ขึ้นต้น `"id": "gen-…"` — คำตอบข้อ (1): ชื่อช่องชั้นนอกสุด (`"id"`, `"choices"`, `"created"`, `"model"`,
-  `"object"`, `"usage"`, `"provider"` …) คือสิ่งที่เขียนต่อจาก `resp.` ได้ เช่น `resp.model`, `resp.usage`, `resp.created`
-- ก้อนที่สองที่ขึ้นต้น `"content": …` — คำตอบข้อ (2): `msg` มี `content` (ข้อความ) `role` (`"assistant"` เสมอ) และ
+**บรรทัดที่ต้องมองหา** (แต่ละก้อน `{ … }` มีหัวข้อ `---- [step N] resp/msg : ค่าจาก agent_loop.py บรรทัด 68/69 ----`
+นำหน้า บอกว่าก้อนนั้นคือตัวแปรไหน เกิดจากบรรทัดไหน ในรอบที่เท่าไร · ชื่อในเครื่องหมายคำพูดหน้า `:` คือชื่อช่อง):
+- ก้อนใต้หัวข้อ **บรรทัด 68** (ขึ้นต้น `"id": "gen-…"`) — คำตอบข้อ (1): ชื่อช่องชั้นนอกสุด (`"id"`, `"choices"`, `"created"`,
+  `"model"`, `"object"`, `"usage"`, `"provider"` …) คือสิ่งที่เขียนต่อจาก `resp.` ได้ เช่น `resp.model`, `resp.usage`, `resp.created`
+- ก้อนใต้หัวข้อ **บรรทัด 69** (ขึ้นต้น `"content": …`) — คำตอบข้อ (2): `msg` มี `content` (ข้อความ) `role` (`"assistant"` เสมอ) และ
   `tool_calls` (รายการ tool ที่ AI ขอให้เรารัน) — สังเกตว่าก้อนนี้คือส่วน `"message"` ที่ซ้อนอยู่ในก้อนแรกนั่นเอง
+  (บรรทัด 69 คือการ "หยิบ" ส่วนนั้นออกมาจาก `resp` ผ่าน `.choices[0].message`)
 - คำถามนี้ AI วน 2 รอบ จึงเห็นก้อนละ 2 ชุด: รอบแรก `"finish_reason": "tool_calls"` และ `"tool_calls": [ …get_time…, …calculate… ]`
   รอบสอง `"finish_reason": "stop"` และ `"tool_calls": null` — `agent_loop.py` บรรทัด 71 ดูแค่ตรงนี้ในการตัดสินใจ
 - ใน `tool_calls` สังเกต `"arguments": "{\"expression\": \"15*4\"}"` มีเครื่องหมายคำพูดครอบทั้งก้อน = เป็น**ข้อความ** ไม่ใช่ dict —
