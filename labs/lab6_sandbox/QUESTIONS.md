@@ -63,7 +63,8 @@ python labs/lab6_sandbox/probe_sandbox.py
    ดักได้ก่อน `RLIMIT_CPU` ไหม
 3. 🔴 ปิดช่องว่างที่เหลือ 2 ข้อ (อ่านไฟล์นอกห้อง + network) ด้วย container: รัน worker ใน Docker ที่
    `--network none` และ mount เฉพาะโฟลเดอร์งานแบบ read-only แล้วรัน `probe_sandbox.py` ซ้ำเพื่อดูว่า
-   `can_read_outside` กลายเป็น `false` (cwd ชั่วคราว + `RLIMIT_FSIZE` ทำไว้แล้วในโค้ดปัจจุบัน)
+   `can_read_outside` กลายเป็น `false` (cwd ชั่วคราว + `RLIMIT_FSIZE` ทำไว้แล้วในโค้ดปัจจุบัน) —
+   เฉลยแบบเต็มอยู่ใน [Lab 6b](../lab6b_sandbox_container/README.md)
 
 > เฉลยเชิงพฤติกรรม ไม่ใช่เฉลยคำตอบตายตัว — ประโยคคำตอบของ AI ต่างกันทุกครั้ง สิ่งที่ต้องตรงคือบรรทัด
 > `TOOL_USE … -> error: sandbox process ถูกยุติ` ไม่ใช่ข้อความคำตอบ

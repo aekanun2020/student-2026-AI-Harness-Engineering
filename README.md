@@ -16,6 +16,7 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 | 4 | [labs/lab4_hooks_middleware](labs/lab4_hooks_middleware) | ต่อยอด Lab 3 ด้วย Hooks/Middleware engine — รีเสิร์ชและออกแบบจากเอกสารจริงของ Anthropic ([Claude Code Hooks](https://code.claude.com/docs/en/hooks)) และ OpenAI ([Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/)) |
 | 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction ดัดแปลงจาก `lab7_memory/agent_memory.py` ของ repo ต้นทาง + Tool-result clearing ที่เพิ่มใหม่ พร้อม tool `read_file` ที่คืนทั้งไฟล์ให้มีของก้อนใหญ่ให้ล้าง) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง clearing (prompt ~9,700 → ~1,300 token), compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
 | 6 | [labs/lab6_sandbox](labs/lab6_sandbox) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + `RLIMIT_CPU` + env ไม่มี API key + cwd ว่างชั่วคราว + `RLIMIT_FSIZE` ห้ามเขียนไฟล์) — ทดสอบจริงด้วยการบังคับ resource exhaustion (`9999**99999999`) แล้วยืนยันว่า agent loop หลักไม่กระทบ มี `probe_sandbox.py` ให้ดูว่าห้องกั้นอะไรได้/ไม่ได้ พร้อมบันทึกบั๊กจริงเรื่อง `RLIMIT_AS` ใช้ไม่ได้บน macOS |
+| 6b | [labs/lab6b_sandbox_container](labs/lab6b_sandbox_container) | Sandbox แบบเต็ม: tool (`calculate` / `read_file` / `run_python`) เป็น **MCP server รันใน Docker container** ที่ `--network none` + mount workspace แบบ read-only + user ไม่ใช่ root — agent loop บน host คุยผ่าน MCP stdio · ปิดสองช่องที่ Lab 6 ปิดไม่ได้ (อ่านไฟล์นอกห้อง, network) มี `probe_sandbox.py` เทียบผลกับ Lab 6 · ต้องมี Docker |
 
 ## สำหรับผู้เรียนที่เคยใช้แค่หน้าแชท (ChatGPT / Claude) — อ่านตรงนี้ก่อน
 
@@ -151,20 +152,20 @@ python labs/lab6_sandbox/agent_loop.py "ตอนนี้กี่โมง แ
 ### แต่ละ Lab ใน repo นี้อยู่ตรงไหนของ 8 Layer นี้
 
 สัญลักษณ์: ● = เป็นแกนหลักของ Lab นั้น · ◐ = แตะ/มีบางส่วน · (ว่าง) = ไม่มี — ตารางนี้เป็นของ repo นี้
-เอง (Lab 1/2/3/3a/4/5/6) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 7-9 · คอลัมน์
+เอง (Lab 1/2/3/3a/4/5/6/6b) ไม่ใช่ตาราง 9 lab ของ repo ต้นทาง เพราะ repo นี้ยังไม่มี Lab 7-9 · คอลัมน์
 L1/L2 ประเมินใหม่จากไฟล์ที่ดัดแปลงแล้ว (L1 ตัด `check_mcp()` ออก, L2 เพิ่มการแสดงค่าใช้จ่าย — ทั้งคู่
 ไม่ byte-identical กับต้นฉบับอีกต่อไป แต่การเพิ่ม/ตัดนั้นไม่กระทบว่า Lab แตะ layer ไหน ค่าจึงเท่าต้นฉบับ)
 
-| Layer | Lab 1 | Lab 2 | Lab 3 | Lab 3a | Lab 4 | Lab 5 | Lab 6 |
-| --- | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| 1. Instructions / Bootstrap | | | | ◐ | ◐ | | |
-| 2. Memory | | | | | | ● | |
-| 3. Tools + Skills | | | ● | ● | ● | ● | ● |
-| 4. Hooks | | | | | ● | | |
-| 5. Reasoning Loop (Agent Loop) | | | ● | ● | ● | ● | ● |
-| 6. Sandbox + Execution | | | ◐* | ◐* | ◐* | | ● |
-| 7. Gateway + Scheduler | | | | | | | |
-| 8. Safety Layer | | | ◐* | ◐* | ◐ | ◐* | ◐ |
+| Layer | Lab 1 | Lab 2 | Lab 3 | Lab 3a | Lab 4 | Lab 5 | Lab 6 | Lab 6b |
+| --- | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| 1. Instructions / Bootstrap | | | | ◐ | ◐ | | | ◐ |
+| 2. Memory | | | | | | ● | | |
+| 3. Tools + Skills | | | ● | ● | ● | ● | ● | ● (MCP) |
+| 4. Hooks | | | | | ● | | | |
+| 5. Reasoning Loop (Agent Loop) | | | ● | ● | ● | ● | ● | ● |
+| 6. Sandbox + Execution | | | ◐* | ◐* | ◐* | | ● | ● |
+| 7. Gateway + Scheduler | | | | | | | | |
+| 8. Safety Layer | | | ◐* | ◐* | ◐ | ◐* | ◐ | ◐ |
 
 > `◐*` = มีร่องรอย/พฤติกรรมคล้าย แต่ยังไม่ใช่ระบบจริงตามนิยาม layer (เช่น `calculate()`'s whitelist
 > eval เป็นการป้องกันแบบพื้นฐาน ไม่ใช่ sandbox จริงแบบ Docker/VM · Lab 5 แตะ Layer 8 ตรงที่ `read_file`
@@ -183,7 +184,14 @@ L1/L2 ประเมินใหม่จากไฟล์ที่ดัด�
 > cwd ว่างชั่วคราว, `RLIMIT_FSIZE=0`) — แต่**ยังอ่านไฟล์นอกห้องได้และยังไม่มี network isolation** เหมือน
 > Docker ตัวเต็ม (ดูตารางเทียบ framework ใน [Lab 6](labs/lab6_sandbox/README.md))
 >
+> **Lab 6b** ปิดสองช่องนั้น: tool ทั้งหมดเป็น MCP server ใน Docker container (`--network none`, mount workspace
+> แบบ `:ro`, `--read-only`, `--cap-drop ALL`, user ไม่ใช่ root, ไม่มี `.env` ใน image) จึงเป็น `●` เต็มใน Layer 6
+> ทั้ง filesystem และ network isolation · Layer 3 เป็น `●` แบบ MCP จริง (agent ถาม `list_tools()` แทนเขียน `TOOLS` เอง)
+> · Layer 1 แตะเพราะ `SYSTEM` บอกโมเดลว่า tool อยู่ใน sandbox · แลกกับการต้องมี Docker — ดู
+> [Lab 6b](labs/lab6b_sandbox_container/README.md)
+>
 > **ช่องว่างที่ยังไม่มี Lab ไหนครอบคลุมเลย:** Layer 1 (เป็น core ล้วน, ยังไม่มี Lab ไหนทำเป็นแกนหลัก),
 > Layer 7 (Gateway/Scheduler), Layer 8 (Safety Layer เต็มรูปแบบ — มีแค่ audit trail บางส่วนจาก Lab 4),
-> filesystem-read/network sandboxing (ดูช่องว่างของ Lab 6 ด้านบน) และ idempotent retry (ยังไม่มี Lab ไหนทำ —
-> ดูรายละเอียดใน [Lab 5 QUESTIONS.md](labs/lab5_memory_checkpoint/QUESTIONS.md); tool-result clearing ทำแล้วใน Lab 5)
+> network allowlist (Lab 6b ตัด network ทิ้งทั้งหมด ยังไม่มีแบบปล่อยเฉพาะโดเมน) และ idempotent retry (ยังไม่มี Lab ไหนทำ —
+> ดูรายละเอียดใน [Lab 5 QUESTIONS.md](labs/lab5_memory_checkpoint/QUESTIONS.md); tool-result clearing ทำแล้วใน Lab 5,
+> filesystem/network sandboxing ทำแล้วใน Lab 6b)

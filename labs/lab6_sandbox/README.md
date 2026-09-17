@@ -82,7 +82,8 @@ python labs/lab6_sandbox/probe_sandbox.py
 ```
 
 จะเห็น `api_key_visible: false`, `cwd_is_empty: true`, การเขียนไฟล์ได้ `OSError: File too large` — และเห็นช่องว่างที่เหลือคือ
-`can_read_outside: true` (ยังอ่านไฟล์ทั่วเครื่องได้) ซึ่ง subprocess + `resource` ปิดไม่ได้ ต้องใช้ container/VM
+`can_read_outside: true` (ยังอ่านไฟล์ทั่วเครื่องได้) ซึ่ง subprocess + `resource` ปิดไม่ได้ ต้องใช้ container/VM —
+**[Lab 6b](../lab6b_sandbox_container/README.md)** ปิดช่องนี้ (และ network) ด้วย Docker container
 
 `_WORKER_CODE` คือสคริปต์เล็กๆ ที่รันใน **subprocess แยกจริง**: ตั้ง `resource.setrlimit(RLIMIT_CPU, ...)`
 ก่อน `eval()` แล้วค่อยประเมิน expression — ถ้าเกิน CPU limit, OS จะส่ง signal ฆ่า subprocess ทิ้งเอง
