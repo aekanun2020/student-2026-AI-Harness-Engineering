@@ -51,7 +51,9 @@ python labs/lab6b_sandbox_container/agent_loop.py "ใช้ tool run_python เ
 
 **บรรทัดที่ต้องมองหา:** `TOOL_USE run_python({'code': ...}) -> [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]` — โค้ดที่โมเดลเขียน
 รันในห้องที่ไม่มี network, เขียนได้แค่ `/tmp`, ไม่มี credential · ลองสั่งให้มัน "ดาวน์โหลดอะไรจากอินเทอร์เน็ต" ดู
-จะได้ `Network is unreachable` กลับมาแทน
+จะได้ error เรื่อง network กลับมาแทน — ข้อความต่างกันตามวิธีที่โมเดลเขียนโค้ด: ใช้ชื่อโดเมน (เช่น `example.com`)
+จะได้ `Temporary failure in name resolution` เพราะแปลงชื่อเป็น IP ไม่ได้ตั้งแต่แรก · ต่อด้วยหมายเลข IP ตรงๆ
+จะได้ `Network is unreachable` · ทั้งสองแบบแปลว่าเดียวกันคือห้องนี้ไม่มีทางออกสู่อินเทอร์เน็ต
 
 ---
 
