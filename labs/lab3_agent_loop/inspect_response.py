@@ -1,5 +1,5 @@
 """
-Lab 3 (เฉลยโจทย์ในห้อง) — agent_loop.py ของเดิมทั้งไฟล์ เพิ่ม print() 2 บรรทัดหลัง msg = resp.choices[0].message
+Lab 3 (เฉลยโจทย์ในห้อง) — agent_loop.py ของเดิมทั้งไฟล์ เพิ่ม print() 2 บรรทัดหลัง msg = resp.choices[0].message (จัดบรรทัดสวยด้วย .model_dump_json(indent=2))
   (1) หลังจุด resp. เขียนอะไรได้อีก   (2) msg บรรจุอะไร
 
 Lab 3 — สร้าง Agent Loop แรกด้วย Pure Python (ไม่ใช้ framework)
@@ -70,8 +70,8 @@ def run_agent(question: str, max_steps: int = 6):
     for step in range(1, max_steps + 1):
         resp = llm.chat(messages=messages, tools=TOOLS)
         msg = resp.choices[0].message
-        print(resp)   # (1) พิมพ์ทั้งซอง จะเห็นชื่อทุกช่องที่เรียกต่อจาก resp. ได้
-        print(msg)    # (2) พิมพ์ข้อความจาก AI จะเห็นว่า msg มี content / role / tool_calls ...
+        print(resp.model_dump_json(indent=2))   # (1) พิมพ์ทั้งซองแบบจัดบรรทัด จะเห็นชื่อทุกช่องที่เรียกต่อจาก resp. ได้
+        print(msg.model_dump_json(indent=2))    # (2) พิมพ์ข้อความจาก AI จะเห็นว่า msg มี content / role / tool_calls ...
 
         if msg.tool_calls:
             print(f"[step {step}] THINK -> ขอเรียก {len(msg.tool_calls)} tool")
