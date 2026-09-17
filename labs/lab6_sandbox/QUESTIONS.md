@@ -38,6 +38,22 @@ terminal ทิ้งทั้งอัน) และเครื่องอา
 
 ---
 
+## แบบฝึกหัด 2: 🟢 ดูด้วยตาว่า "ห้อง" กั้นอะไรได้บ้าง (ไม่เรียก LLM ไม่เสียเงิน)
+
+```bash
+python labs/lab6_sandbox/probe_sandbox.py
+```
+
+**บรรทัดที่ต้องมองหา:**
+- `[แม่] OPENROUTER_API_KEY ใน os.environ ของ process แม่: มี` แต่ข้อ 1) ได้ `"api_key_visible": false` —
+  ความลับอยู่กับโปรแกรมแม่ ไม่ได้ตามเข้าไปในห้อง
+- ข้อ 1) `"cwd_is_empty": true` — โปรแกรมลูกยืนอยู่ในโฟลเดอร์ว่าง ไม่ใช่โฟลเดอร์ repo
+- ข้อ 3) `OSError: File too large` — เขียนไฟล์ไม่ได้เลยแม้แต่ 1 ตัวอักษร (macOS/Linux; Windows จะเขียนได้ เพราะไม่มีโมดูล `resource`)
+- ข้อ 2) `"can_read_outside": true` — **ยังอ่านไฟล์นอกห้องได้** นี่คือช่องว่างที่ subprocess ปิดไม่ได้ (และ network ก็ยังต่อได้)
+  เป็นเหตุผลว่าทำไม sandbox ของจริงต้องเป็น container/VM (ดู README หัวข้อ "เทียบกับ framework จริง")
+
+---
+
 ## แบบฝึกหัดต่อยอด — 🟡/🔴 สำหรับคนที่เขียน Python ได้แล้ว (ข้ามได้)
 
 1. 🟡 ลองแก้ `SANDBOX_CPU_SEC` ใน `agent_loop.py` ให้สั้นลงมากๆ (เช่น 0.1 วินาที) แล้วดูว่านิพจน์ปกติอย่าง
@@ -45,8 +61,9 @@ terminal ทิ้งทั้งอัน) และเครื่องอา
 2. 🔴 รันบน Linux (เช่นใน Docker container หรือ VM) แล้วเช็คว่า `RLIMIT_AS` ตั้งค่าได้จริงไหม (ต่างจาก
    macOS ที่ตั้งไม่ได้เลย) ลองทำให้ subprocess กิน memory เกิน limit โดยไม่กิน CPU มาก ดูว่า `RLIMIT_AS`
    ดักได้ก่อน `RLIMIT_CPU` ไหม
-3. 🔴 ลองเพิ่มการจำกัด filesystem จริง (เช่น รัน subprocess ด้วย working directory ชั่วคราวที่ว่างเปล่า
-   หรือใช้ `chroot`/container) เพื่อปิดช่องว่างที่ README บอกไว้ว่ายังไม่ครอบคลุม
+3. 🔴 ปิดช่องว่างที่เหลือ 2 ข้อ (อ่านไฟล์นอกห้อง + network) ด้วย container: รัน worker ใน Docker ที่
+   `--network none` และ mount เฉพาะโฟลเดอร์งานแบบ read-only แล้วรัน `probe_sandbox.py` ซ้ำเพื่อดูว่า
+   `can_read_outside` กลายเป็น `false` (cwd ชั่วคราว + `RLIMIT_FSIZE` ทำไว้แล้วในโค้ดปัจจุบัน)
 
 > เฉลยเชิงพฤติกรรม ไม่ใช่เฉลยคำตอบตายตัว — ประโยคคำตอบของ AI ต่างกันทุกครั้ง สิ่งที่ต้องตรงคือบรรทัด
 > `TOOL_USE … -> error: sandbox process ถูกยุติ` ไม่ใช่ข้อความคำตอบ

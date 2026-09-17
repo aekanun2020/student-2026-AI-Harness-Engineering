@@ -15,7 +15,7 @@ Repo เก็บงาน/แบบฝึกหัดของหลักส�
 | 3a | [labs/lab3a_self_correction](labs/lab3a_self_correction) | เติม self-correction ให้ Agent Loop ด้วยการแก้ `SYSTEM` prompt เพียงจุดเดียว (ไม่ใช้ hook) — ต่อยอดจาก Lab 3 โดยไม่แก้ไฟล์ Lab 3 เลย พร้อมโชว์ข้อจำกัดที่ prompt-only แก้ไม่ได้ ซึ่งเป็นเหตุผลที่ต้องมี Lab 4 |
 | 4 | [labs/lab4_hooks_middleware](labs/lab4_hooks_middleware) | ต่อยอด Lab 3 ด้วย Hooks/Middleware engine — รีเสิร์ชและออกแบบจากเอกสารจริงของ Anthropic ([Claude Code Hooks](https://code.claude.com/docs/en/hooks)) และ OpenAI ([Agents SDK Guardrails](https://openai.github.io/openai-agents-python/guardrails/)) |
 | 5 | [labs/lab5_memory_checkpoint](labs/lab5_memory_checkpoint) | Memory (Compaction ดัดแปลงจาก `lab7_memory/agent_memory.py` ของ repo ต้นทาง + Tool-result clearing ที่เพิ่มใหม่ พร้อม tool `read_file` ที่คืนทั้งไฟล์ให้มีของก้อนใหญ่ให้ล้าง) + Checkpoint (external memory ที่รอดข้าม process จริง ต่างจากต้นฉบับที่เป็นแค่ RAM) — ทดสอบจริงทั้ง clearing (prompt ~9,700 → ~1,300 token), compaction, cross-process memory, และ resume หลัง `SIGKILL` กลาง turn |
-| 6 | [labs/lab6_sandbox](labs/lab6_sandbox) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + `RLIMIT_CPU`) — ทดสอบจริงด้วยการบังคับ resource exhaustion (`9999**99999999`) แล้วยืนยันว่า agent loop หลักไม่กระทบ พร้อมบันทึกบั๊กจริงเรื่อง `RLIMIT_AS` ใช้ไม่ได้บน macOS |
+| 6 | [labs/lab6_sandbox](labs/lab6_sandbox) | เติม Sandbox (แยก `eval()` ไปรันใน subprocess + `RLIMIT_CPU` + env ไม่มี API key + cwd ว่างชั่วคราว + `RLIMIT_FSIZE` ห้ามเขียนไฟล์) — ทดสอบจริงด้วยการบังคับ resource exhaustion (`9999**99999999`) แล้วยืนยันว่า agent loop หลักไม่กระทบ มี `probe_sandbox.py` ให้ดูว่าห้องกั้นอะไรได้/ไม่ได้ พร้อมบันทึกบั๊กจริงเรื่อง `RLIMIT_AS` ใช้ไม่ได้บน macOS |
 
 ## สำหรับผู้เรียนที่เคยใช้แค่หน้าแชท (ChatGPT / Claude) — อ่านตรงนี้ก่อน
 
@@ -179,10 +179,11 @@ L1/L2 ประเมินใหม่จากไฟล์ที่ดัด�
 > `lab7_memory` ต้นฉบับที่เป็นแค่ RAM) — ดู [Lab 5](labs/lab5_memory_checkpoint/README.md)
 >
 > **Lab 6** เป็น `●` จริงใน Layer 6 (subprocess + `RLIMIT_CPU` แยก process จริง ไม่ใช่แค่ whitelist
-> ตัวอักษร) ทดสอบแล้วด้วยการบังคับ resource exhaustion จริง — แต่**ยังไม่ครอบคลุม filesystem/network
-> isolation** เหมือน Docker ตัวเต็ม (ดูตารางเทียบ framework ใน [Lab 6](labs/lab6_sandbox/README.md))
+> ตัวอักษร) ทดสอบแล้วด้วยการบังคับ resource exhaustion จริง และกั้นความลับ/การเขียนไฟล์แล้ว (env มีแค่ `PATH`,
+> cwd ว่างชั่วคราว, `RLIMIT_FSIZE=0`) — แต่**ยังอ่านไฟล์นอกห้องได้และยังไม่มี network isolation** เหมือน
+> Docker ตัวเต็ม (ดูตารางเทียบ framework ใน [Lab 6](labs/lab6_sandbox/README.md))
 >
 > **ช่องว่างที่ยังไม่มี Lab ไหนครอบคลุมเลย:** Layer 1 (เป็น core ล้วน, ยังไม่มี Lab ไหนทำเป็นแกนหลัก),
 > Layer 7 (Gateway/Scheduler), Layer 8 (Safety Layer เต็มรูปแบบ — มีแค่ audit trail บางส่วนจาก Lab 4),
-> filesystem/network sandboxing (ดูช่องว่างของ Lab 6 ด้านบน), tool-result clearing และ idempotent
-> retry (ยังไม่มี Lab ไหนทำ — ดูรายละเอียดใน [Lab 5 QUESTIONS.md](labs/lab5_memory_checkpoint/QUESTIONS.md))
+> filesystem-read/network sandboxing (ดูช่องว่างของ Lab 6 ด้านบน) และ idempotent retry (ยังไม่มี Lab ไหนทำ —
+> ดูรายละเอียดใน [Lab 5 QUESTIONS.md](labs/lab5_memory_checkpoint/QUESTIONS.md); tool-result clearing ทำแล้วใน Lab 5)
