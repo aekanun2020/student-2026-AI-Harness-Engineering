@@ -41,25 +41,29 @@
 บรรทัดที่ 69 ของ `agent_loop.py` คือ `msg = resp.choices[0].message` — คำถามที่มักตามมาคือ
 **(1)** หลังจุด `resp.` เรียกอะไรได้อีกนอกจาก `choices` และ **(2)** `msg` บรรจุอะไรบ้าง
 
-ไม่ต้องเดา ให้โปรแกรมพิมพ์ของจริงออกมาดู — `inspect_response.py` คือ `agent_loop.py` **ทั้งไฟล์เหมือนเดิม**
-เพิ่มแค่บรรทัด `[inspect]` ไม่กี่บรรทัดหลังบรรทัดที่ 69 (เปิด 2 ไฟล์เทียบกันได้ ส่วนที่เพิ่มมีป้าย `# ---- (เพิ่ม)`)
-รันด้วยคำสั่งเดียวกับ Lab 3 (🟢 แค่พิมพ์คำสั่ง):
+ไม่ต้องเดา ให้โปรแกรมพิมพ์ของจริงออกมาดู — วิธีที่ง่ายที่สุดคือเพิ่ม `print()` 2 บรรทัดต่อจากบรรทัดที่ 69:
+
+```python
+        msg = resp.choices[0].message
+        print(resp)   # (1)
+        print(msg)    # (2)
+```
+
+`inspect_response.py` คือ `agent_loop.py` ทั้งไฟล์ที่เพิ่มแค่ 2 บรรทัดนี้ (🟢 แค่พิมพ์คำสั่ง รันเหมือน Lab 3):
 
 ```bash
 python labs/lab3_agent_loop/inspect_response.py "ตอนนี้กี่โมง แล้ว 15*4 เท่ากับเท่าไร"
 ```
 
-ผลลัพธ์เหมือน `agent_loop.py` ทุกบรรทัด บวกบรรทัด `[inspect]` ก่อน `[step N]` ของทุกรอบ — คำถามนี้ AI จะวน 2 รอบ
-รอบแรก**ขอเรียก tool** รอบสอง**ตอบเป็นข้อความ** จึงเห็นทั้ง 2 กรณีในการรันครั้งเดียว
-
-**บรรทัดที่ต้องมองหา:**
-- `[inspect] resp เป็น ChatCompletion มี field: ['id', 'choices', 'created', 'model', … 'usage', 'provider']` — คำตอบข้อ (1)
-  ที่ใช้บ่อยคือ `resp.usage` (นับ token ที่ Lab 2 ใช้) และ `resp.choices[0].finish_reason` (`'tool_calls'` vs `'stop'`)
-- `[inspect] msg เป็น ChatCompletionMessage มี field: ['content', 'refusal', 'role', … 'tool_calls', …]` — คำตอบข้อ (2)
-  รอบแรก `msg.tool_calls[..]: … name=get_time …` / `name=calculate …` · รอบสอง `msg.tool_calls=None (ไม่มี = END_TURN)`
-  — `agent_loop.py` บรรทัด 71 ตัดสินใจจาก `.tool_calls` เท่านั้น ไม่ได้ดู `.content`
-- `arguments='{"expression": "15*4"}'` มีเครื่องหมายคำพูดครอบ = เป็น**ข้อความ** ไม่ใช่ dict — เหตุผลที่บรรทัด 79
-  ต้อง `json.loads()` ก่อน
+**บรรทัดที่ต้องมองหา** (ยาวมาก 1 บรรทัดต่อ 1 print — อ่านหา "ชื่อ=" ก่อนวงเล็บเปิดแต่ละอัน):
+- บรรทัดที่ขึ้นต้น `ChatCompletion(id=…, choices=[…], created=…, model=…, object=…, usage=…, provider=…)` — คำตอบข้อ (1):
+  ทุกคำที่อยู่หน้า `=` ในชั้นนอกสุดคือสิ่งที่เขียนต่อจาก `resp.` ได้ เช่น `resp.model`, `resp.usage`, `resp.created`
+- บรรทัดที่ขึ้นต้น `ChatCompletionMessage(content=…, refusal=…, role='assistant', …, tool_calls=…)` — คำตอบข้อ (2):
+  `msg` มี `content` (ข้อความ) `role` (`'assistant'` เสมอ) และ `tool_calls` (รายการ tool ที่ AI ขอให้เรารัน)
+- คำถามนี้ AI วน 2 รอบ จึงเห็น 2 ชุด: รอบแรก `finish_reason='tool_calls'` และ `tool_calls=[…get_time…, …calculate…]`
+  รอบสอง `finish_reason='stop'` และ `tool_calls=None` — `agent_loop.py` บรรทัด 71 ดูแค่ตรงนี้ในการตัดสินใจ
+- ใน `tool_calls` สังเกต `arguments='{"expression": "15*4"}'` มีเครื่องหมายคำพูดครอบ = เป็น**ข้อความ** ไม่ใช่ dict —
+  เหตุผลที่บรรทัด 79 ต้อง `json.loads()` ก่อน
 
 ---
 

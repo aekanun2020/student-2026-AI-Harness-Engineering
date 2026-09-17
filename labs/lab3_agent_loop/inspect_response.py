@@ -1,7 +1,6 @@
 """
-Lab 3 (เสริม) — agent_loop.py ของเดิมทั้งไฟล์ + บรรทัด [inspect] ไม่กี่บรรทัดหลัง msg = resp.choices[0].message
-เพื่อตอบคำถามในห้อง: (1) resp. เรียกอะไรได้อีก  (2) msg บรรจุอะไร
-ทุกอย่างนอกจากบล็อก "# ---- (เพิ่ม) ..." เหมือน agent_loop.py ทุกตัวอักษร รันด้วยคำสั่งเดียวกัน
+Lab 3 (เฉลยโจทย์ในห้อง) — agent_loop.py ของเดิมทั้งไฟล์ เพิ่ม print() 2 บรรทัดหลัง msg = resp.choices[0].message
+  (1) หลังจุด resp. เขียนอะไรได้อีก   (2) msg บรรจุอะไร
 
 Lab 3 — สร้าง Agent Loop แรกด้วย Pure Python (ไม่ใช้ framework)
 อ้างอิง outline: บทที่ 1.3 / แบบฝึกหัดที่ 3
@@ -71,20 +70,8 @@ def run_agent(question: str, max_steps: int = 6):
     for step in range(1, max_steps + 1):
         resp = llm.chat(messages=messages, tools=TOOLS)
         msg = resp.choices[0].message
-
-        # ---- (เพิ่ม) คำถาม (1): นอกจาก resp.choices แล้ว resp. มีอะไรอีก ----
-        print(f"[inspect] resp เป็น {type(resp).__name__} มี field: {list(resp.model_dump().keys())}")
-        print(f"[inspect]   resp.model={resp.model!r}  resp.usage: prompt={resp.usage.prompt_tokens} "
-              f"completion={resp.usage.completion_tokens}  resp.choices[0].finish_reason={resp.choices[0].finish_reason!r}")
-        # ---- (เพิ่ม) คำถาม (2): msg บรรจุอะไร ----
-        print(f"[inspect] msg เป็น {type(msg).__name__} มี field: {list(msg.model_dump().keys())}")
-        print(f"[inspect]   msg.role={msg.role!r}  msg.content={msg.content!r}")
-        if msg.tool_calls:
-            for tc in msg.tool_calls:
-                print(f"[inspect]   msg.tool_calls[..]: id={tc.id} name={tc.function.name} "
-                      f"arguments={tc.function.arguments!r} (เป็นข้อความ JSON -> json.loads ก่อนใช้)")
-        else:
-            print(f"[inspect]   msg.tool_calls={msg.tool_calls}  (ไม่มี = END_TURN)")
+        print(resp)   # (1) พิมพ์ทั้งซอง จะเห็นชื่อทุกช่องที่เรียกต่อจาก resp. ได้
+        print(msg)    # (2) พิมพ์ข้อความจาก AI จะเห็นว่า msg มี content / role / tool_calls ...
 
         if msg.tool_calls:
             print(f"[step {step}] THINK -> ขอเรียก {len(msg.tool_calls)} tool")
