@@ -98,4 +98,9 @@ for step in range(1, max_steps + 1):
 
 ---
 
+> **⚠️ 2 บรรทัดใน "วิธีรัน" ด้านบนเป็นของ repo ต้นทาง ใช้กับ repo นี้ไม่ได้ตรงๆ:**
+> - `conda activate agentic-ai` → ใช้ `source .venv/bin/activate` แทน (Windows: `.venv\Scripts\activate`)
+> - `cd Python-Agent-LangGraph` → ใช้ `cd student-2026-AI-Harness-Engineering` แทน (ชื่อโฟลเดอร์ repo นี้)
+> - บรรทัด `ดู screenshot ตัวอย่าง: ../../screenshots/...` ด้านบน → ไม่มีโฟลเดอร์นั้นใน repo นี้ ข้ามได้
+>
 > ดูคำถามตัวอย่างและแบบฝึกหัดแยกไว้ที่ [QUESTIONS.md](QUESTIONS.md)
